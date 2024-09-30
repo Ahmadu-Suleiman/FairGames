@@ -18,58 +18,81 @@ class _TicTacToeState extends State<TicTacToe> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: const Text('Catalog')),
-        body: Column(children: <Widget>[
-          Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: <Widget>[
-                Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Text('Player X',
-                          style: Theme.of(context).textTheme.headlineLarge),
-                      Text(xScore.toString(),
-                          style: Theme.of(context).textTheme.titleLarge)
-                    ]),
-                Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Text('Player O',
-                          style: Theme.of(context).textTheme.headlineLarge),
-                      Text(oScore.toString(),
-                          style: Theme.of(context).textTheme.titleLarge)
-                    ])
-              ]),
-          Card(
-            elevation: 8,
-            margin: const EdgeInsets.all(20),
-            child: Container(
-                padding: const EdgeInsets.all(20),
-                color: Theme.of(context).colorScheme.primaryContainer,
-                child: GridView.count(
-                    shrinkWrap: true,
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 20,
-                    mainAxisSpacing: 20,
-                    children: List.generate(
-                        9,
-                        (index) => GestureDetector(
-                            onTap: () => _tapped(index),
-                            child: Container(
-                                decoration: BoxDecoration(
-                                    border: Border.all(color: Colors.black)),
-                                child: Center(
-                                    child: Text(displayElement[index],
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .displaySmall))))))),
-          ),
-          FilledButton.tonal(
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary),
-              onPressed: _clearScoreBoard,
-              child: const Text("Clear Score Board"))
-        ]));
+        appBar: AppBar(
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            title: const Text('Games Catalog')),
+        body: SingleChildScrollView(
+            child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(children: <Widget>[
+                  Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: <Widget>[
+                        Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: <Widget>[
+                              Text('Player X',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineLarge
+                                      ?.copyWith(fontWeight: FontWeight.bold)),
+                              Text(xScore.toString(),
+                                  style: Theme.of(context).textTheme.titleLarge)
+                            ]),
+                        Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: <Widget>[
+                              Text('Player O',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineLarge
+                                      ?.copyWith(fontWeight: FontWeight.bold)),
+                              Text(oScore.toString(),
+                                  style: Theme.of(context).textTheme.titleLarge)
+                            ])
+                      ]),
+                  Container(
+                      margin: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          color:
+                              Theme.of(context).colorScheme.surfaceContainer),
+                      padding: const EdgeInsets.all(20),
+                      child: GridView.count(
+                          shrinkWrap: true,
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 20,
+                          mainAxisSpacing: 20,
+                          children: List.generate(
+                              9,
+                              (index) => GestureDetector(
+                                  onTap: () => _tapped(index),
+                                  child: Container(
+                                      decoration: BoxDecoration(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primaryContainer,
+                                          borderRadius:
+                                              BorderRadius.circular(20),
+                                          border: Border.all(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .outline)),
+                                      child: Center(
+                                          child: Text(displayElement[index],
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .displayMedium
+                                                  ?.copyWith(
+                                                      fontWeight: FontWeight.bold)))))))),
+                  FilledButton.tonal(
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              Theme.of(context).colorScheme.primary),
+                      onPressed: _clearScoreBoard,
+                      child: Text("Clear Score Board",
+                          style: Theme.of(context).textTheme.displaySmall))
+                ]))));
   }
 
   void _tapped(int index) {
@@ -144,7 +167,6 @@ class _TicTacToeState extends State<TicTacToe> {
         builder: (BuildContext context) {
           return AlertDialog(title: Text("$winner is Winner!!!"), actions: [
             TextButton(
-                style: TextButton.styleFrom(foregroundColor: Colors.red),
                 child: const Text("Play Again"),
                 onPressed: () {
                   _clearBoard();
@@ -167,7 +189,6 @@ class _TicTacToeState extends State<TicTacToe> {
         builder: (BuildContext context) {
           return AlertDialog(title: const Text("Draw"), actions: [
             TextButton(
-                style: TextButton.styleFrom(foregroundColor: Colors.red),
                 onPressed: () {
                   _clearBoard();
                   Navigator.of(context).pop();
