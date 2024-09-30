@@ -18,75 +18,57 @@ class _TicTacToeState extends State<TicTacToe> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: Colors.indigo[900],
+        appBar: AppBar(title: const Text('Catalog')),
         body: Column(children: <Widget>[
-          Expanded(
-              child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                Padding(
-                    padding: const EdgeInsets.all(30.0),
-                    child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          const Text('Player X',
-                              style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white)),
-                          Text(xScore.toString(),
-                              style: const TextStyle(
-                                  fontSize: 20, color: Colors.white))
-                        ])),
-                Padding(
-                    padding: const EdgeInsets.all(30.0),
-                    child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          const Text('Player O',
-                              style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white)),
-                          Text(oScore.toString(),
-                              style: const TextStyle(
-                                  fontSize: 20, color: Colors.white))
-                        ]))
-              ])),
-          Expanded(
-              flex: 4,
-              child: GridView.builder(
-                  itemCount: 9,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3),
-                  itemBuilder: (BuildContext context, int index) {
-                    return GestureDetector(
-                        onTap: () {
-                          _tapped(index);
-                        },
-                        child: Container(
-                            decoration: BoxDecoration(
-                                border: Border.all(color: Colors.white)),
-                            child: Center(
-                                child: Text(displayElement[index],
-                                    style: const TextStyle(
-                                        color: Colors.white, fontSize: 35)))));
-                  })),
-          Expanded(
-              child: Container(
-                  child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      backgroundColor: Colors.red, // foreground
-                    ),
-                    onPressed: () {
-                      _clearScoreBoard();
-                    },
-                    child: const Text("Clear Score Board"))
-              ])))
+          Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Text('Player X',
+                          style: Theme.of(context).textTheme.headlineLarge),
+                      Text(xScore.toString(),
+                          style: Theme.of(context).textTheme.titleLarge)
+                    ]),
+                Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Text('Player O',
+                          style: Theme.of(context).textTheme.headlineLarge),
+                      Text(oScore.toString(),
+                          style: Theme.of(context).textTheme.titleLarge)
+                    ])
+              ]),
+          Card(
+            elevation: 8,
+            margin: const EdgeInsets.all(20),
+            child: Container(
+                padding: const EdgeInsets.all(20),
+                color: Theme.of(context).colorScheme.primaryContainer,
+                child: GridView.count(
+                    shrinkWrap: true,
+                    crossAxisCount: 3,
+                    crossAxisSpacing: 20,
+                    mainAxisSpacing: 20,
+                    children: List.generate(
+                        9,
+                        (index) => GestureDetector(
+                            onTap: () => _tapped(index),
+                            child: Container(
+                                decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.black)),
+                                child: Center(
+                                    child: Text(displayElement[index],
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .displaySmall))))))),
+          ),
+          FilledButton.tonal(
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.primary),
+              onPressed: _clearScoreBoard,
+              child: const Text("Clear Score Board"))
         ]));
   }
 
@@ -160,19 +142,15 @@ class _TicTacToeState extends State<TicTacToe> {
         barrierDismissible: false,
         context: context,
         builder: (BuildContext context) {
-          return AlertDialog(
-              title: Text("\" $winner \" is Winner!!!"),
-              actions: [
-                TextButton(
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.red, // foreground
-                    ),
-                    child: const Text("Play Again"),
-                    onPressed: () {
-                      _clearBoard();
-                      Navigator.of(context).pop();
-                    })
-              ]);
+          return AlertDialog(title: Text("$winner is Winner!!!"), actions: [
+            TextButton(
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text("Play Again"),
+                onPressed: () {
+                  _clearBoard();
+                  Navigator.of(context).pop();
+                })
+          ]);
         });
 
     if (winner == 'O') {
@@ -189,9 +167,7 @@ class _TicTacToeState extends State<TicTacToe> {
         builder: (BuildContext context) {
           return AlertDialog(title: const Text("Draw"), actions: [
             TextButton(
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.red, // foreground
-                ),
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
                 onPressed: () {
                   _clearBoard();
                   Navigator.of(context).pop();
@@ -207,7 +183,6 @@ class _TicTacToeState extends State<TicTacToe> {
         displayElement[i] = '';
       }
     });
-
     filledBoxes = 0;
   }
 
