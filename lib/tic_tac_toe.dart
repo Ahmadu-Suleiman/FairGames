@@ -25,7 +25,7 @@ class _TicTacToeState extends State<TicTacToe> {
             title: const Text('Games Catalog')),
         body: SingleChildScrollView(
             child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(20),
                 child: Column(children: <Widget>[
                   Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -53,16 +53,15 @@ class _TicTacToeState extends State<TicTacToe> {
                                   style: Theme.of(context).textTheme.titleLarge)
                             ])
                       ]),
+                  const Divider(height: 40),
                   Container(
-                      margin: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(20),
                           color:
                               Theme.of(context).colorScheme.surfaceContainer),
                       padding: const EdgeInsets.all(20),
                       child: GridView.count(
-                          childAspectRatio:
-                              (size.width - 60) / (size.height - 250),
+                          childAspectRatio: size.width / (size.height - 400),
                           shrinkWrap: true,
                           crossAxisCount: 3,
                           crossAxisSpacing: 12,
@@ -89,8 +88,9 @@ class _TicTacToeState extends State<TicTacToe> {
                                               style: Theme.of(context)
                                                   .textTheme
                                                   .displayMedium
-                                                  ?.copyWith(fontWeight: FontWeight.bold)))))))),
-                  const SizedBox(height: 20),
+                                                  ?.copyWith(
+                                                      fontWeight: FontWeight.bold)))))))),
+                  const SizedBox(height: 40),
                   FilledButton.tonal(
                       style: ElevatedButton.styleFrom(
                           backgroundColor:
