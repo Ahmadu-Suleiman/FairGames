@@ -1,4 +1,4 @@
-package com.example.fairgames
+package com.originswift.fairgames
 
 import io.flutter.embedding.android.FlutterActivity
 
