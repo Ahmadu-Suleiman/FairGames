@@ -22,7 +22,7 @@ class _TicTacToeState extends State<TicTacToe> {
     return Scaffold(
         appBar: AppBar(
             backgroundColor: Theme.of(context).colorScheme.primary,
-            title: const Text('Games Catalog')),
+            title: const Text('Tic Tac Toe')),
         body: SingleChildScrollView(
             child: Padding(
                 padding: const EdgeInsets.all(20),

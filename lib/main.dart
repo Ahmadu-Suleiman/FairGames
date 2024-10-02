@@ -1,4 +1,4 @@
-import 'package:fairgames/tic_tac_toe.dart';
+import 'package:fairgames/home_page.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -14,6 +14,6 @@ class MyApp extends StatelessWidget {
         title: 'Fair Games',
         theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue)),
-        home: const TicTacToe());
+        home: const HomePage());
   }
 }
