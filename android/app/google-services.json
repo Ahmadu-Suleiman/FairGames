@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "372122830173",
+    "project_id": "fair-games-47cad",
+    "storage_bucket": "fair-games-47cad.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:372122830173:android:ee4749762345495a88d4b4",
+        "android_client_info": {
+          "package_name": "com.originswift.fairgames"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC9LgUg5mqPda1TmQdcyOzK7RnR5YiWQy4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
