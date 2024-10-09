@@ -9,6 +9,19 @@ class Firestore {
 
   static Stream lobbiesStream() => lobbies.snapshots();
 
+  static Future<void> addPlayer(Player player, String id) async =>
+      await players.doc(id).set({'username': player.username});
+
+  static Future<Player?> player(String id) async {
+    try {
+      final data = await players.doc(id).get();
+
+      return Player(id: id, username: data['username']);
+    } catch (e) {
+      return null;
+    }
+  }
+
   static Future<void> addLobby(Player player, Lobby lobby) async =>
       await lobbies.add({
         'name': lobby.name,
