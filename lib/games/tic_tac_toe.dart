@@ -1,3 +1,6 @@
+import 'package:fairgames/firebase/authentication.dart';
+import 'package:fairgames/firebase/firestore.dart';
+import 'package:fairgames/models/lobby.dart';
 import 'package:flutter/material.dart';
 
 class TicTacToe extends StatefulWidget {
@@ -10,6 +13,7 @@ class TicTacToe extends StatefulWidget {
 }
 
 class _TicTacToeState extends State<TicTacToe> {
+  late Lobby lobby;
   bool oTurn = true;
 
   List<String> displayElement = ['', '', '', '', '', '', '', '', ''];
@@ -18,92 +22,115 @@ class _TicTacToeState extends State<TicTacToe> {
   int filledBoxes = 0;
 
   @override
+  void initState() {
+    super.initState();
+    setState(() => Firestore.lobby(widget.lobbyId)
+        .then((lobby) => setState(() => this.lobby = lobby)));
+  }
+
+  @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.sizeOf(context);
 
-    return Scaffold(
-        appBar: AppBar(
-            backgroundColor: Theme.of(context).colorScheme.primary,
-            title: const Text('Tic Tac Toe')),
-        body: SingleChildScrollView(
-            child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(children: <Widget>[
-                  Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: <Widget>[
-                        Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: <Widget>[
-                              Text('Player X',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .headlineLarge
-                                      ?.copyWith(fontWeight: FontWeight.bold)),
-                              Text(xScore.toString(),
-                                  style: Theme.of(context).textTheme.titleLarge)
-                            ]),
-                        Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: <Widget>[
-                              Text('Player O',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .headlineLarge
-                                      ?.copyWith(fontWeight: FontWeight.bold)),
-                              Text(oScore.toString(),
-                                  style: Theme.of(context).textTheme.titleLarge)
-                            ])
-                      ]),
-                  const Divider(height: 40),
-                  Container(
-                      decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          color:
-                              Theme.of(context).colorScheme.surfaceContainer),
-                      padding: const EdgeInsets.all(20),
-                      child: GridView.count(
-                          childAspectRatio: size.width / (size.height - 400),
-                          shrinkWrap: true,
-                          crossAxisCount: 3,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                          children: List.generate(
-                              9,
-                              (index) => GestureDetector(
-                                  onTap: () => _tapped(index),
-                                  child: Container(
-                                      width: 200,
-                                      height: 200,
-                                      decoration: BoxDecoration(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .primaryContainer,
-                                          borderRadius:
-                                              BorderRadius.circular(20),
-                                          border: Border.all(
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .outline)),
-                                      child: Center(
-                                          child: Text(displayElement[index],
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .displayMedium
-                                                  ?.copyWith(
-                                                      fontWeight: FontWeight.bold)))))))),
-                  const SizedBox(height: 40),
-                  FilledButton.tonal(
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              Theme.of(context).colorScheme.primary),
-                      onPressed: _clearScoreBoard,
-                      child: Text("Clear Score Board",
-                          style: Theme.of(context).textTheme.displaySmall))
-                ]))));
+    return StreamBuilder(
+        stream: Firestore.tictactoeStream(lobby.id),
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            final game = Firestore.gameTicTacToeFromSnapshot(snapshot.data!);
+
+            return Scaffold(
+                appBar: AppBar(
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    title: const Text('Tic Tac Toe')),
+                body: SingleChildScrollView(
+                    child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(children: <Widget>[
+                          Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: <Widget>[
+                                Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: <Widget>[
+                                      Text('Player X',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .headlineLarge
+                                              ?.copyWith(
+                                                  fontWeight: FontWeight.bold)),
+                                      Text(xScore.toString(),
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleLarge)
+                                    ]),
+                                Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: <Widget>[
+                                      Text('Player O',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .headlineLarge
+                                              ?.copyWith(
+                                                  fontWeight: FontWeight.bold)),
+                                      Text(oScore.toString(),
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleLarge)
+                                    ])
+                              ]),
+                          const Divider(height: 40),
+                          IgnorePointer(
+                              ignoring: game.turn == Authentication.user?.uid,
+                              child: Container(
+                                  decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(20),
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .surfaceContainer),
+                                  padding: const EdgeInsets.all(20),
+                                  child: GridView.count(
+                                      childAspectRatio:
+                                          size.width / (size.height - 400),
+                                      shrinkWrap: true,
+                                      crossAxisCount: 3,
+                                      crossAxisSpacing: 12,
+                                      mainAxisSpacing: 12,
+                                      children: List.generate(
+                                          9,
+                                          (index) => GestureDetector(
+                                              onTap: () => tapped(index),
+                                              child: Container(
+                                                  width: 200,
+                                                  height: 200,
+                                                  decoration: BoxDecoration(
+                                                      color: Theme.of(context)
+                                                          .colorScheme
+                                                          .primaryContainer,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              20),
+                                                      border: Border.all(
+                                                          color: Theme.of(context)
+                                                              .colorScheme
+                                                              .outline)),
+                                                  child: Center(child: Text(displayElement[index], style: Theme.of(context).textTheme.displayMedium?.copyWith(fontWeight: FontWeight.bold))))))))),
+                          const SizedBox(height: 40),
+                          FilledButton.tonal(
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor:
+                                      Theme.of(context).colorScheme.primary),
+                              onPressed: _clearScoreBoard,
+                              child: Text("Clear Score Board",
+                                  style:
+                                      Theme.of(context).textTheme.displaySmall))
+                        ]))));
+          } else {
+            return const Center(child: CircularProgressIndicator());
+          }
+        });
   }
 
-  void _tapped(int index) {
+  void tapped(int index) {
     setState(() {
       if (oTurn && displayElement[index] == '') {
         displayElement[index] = 'O';
