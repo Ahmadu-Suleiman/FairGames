@@ -1,5 +1,6 @@
 import 'package:fairgames/firebase/authentication.dart';
 import 'package:fairgames/firebase/firestore.dart';
+import 'package:fairgames/models/game_tic_tac_toe.dart';
 import 'package:fairgames/models/lobby.dart';
 import 'package:flutter/material.dart';
 
@@ -14,11 +15,10 @@ class TicTacToe extends StatefulWidget {
 
 class _TicTacToeState extends State<TicTacToe> {
   late Lobby lobby;
-  bool oTurn = true;
+  late GameTicTacToe game;
+  bool xTurn = true;
 
   List<String> displayElement = ['', '', '', '', '', '', '', '', ''];
-  int oScore = 0;
-  int xScore = 0;
   int filledBoxes = 0;
 
   @override
@@ -28,6 +28,8 @@ class _TicTacToeState extends State<TicTacToe> {
         .then((lobby) => setState(() => this.lobby = lobby)));
   }
 
+  bool get isUserTurn => game.turn == Authentication.user?.uid;
+
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.sizeOf(context);
@@ -36,7 +38,7 @@ class _TicTacToeState extends State<TicTacToe> {
         stream: Firestore.tictactoeStream(lobby.id),
         builder: (context, snapshot) {
           if (snapshot.hasData) {
-            final game = Firestore.gameTicTacToeFromSnapshot(snapshot.data!);
+            game = Firestore.gameTicTacToeFromSnapshot(snapshot.data!);
 
             return Scaffold(
                 appBar: AppBar(
@@ -58,7 +60,7 @@ class _TicTacToeState extends State<TicTacToe> {
                                               .headlineLarge
                                               ?.copyWith(
                                                   fontWeight: FontWeight.bold)),
-                                      Text(xScore.toString(),
+                                      Text(game.score1.toString(),
                                           style: Theme.of(context)
                                               .textTheme
                                               .titleLarge)
@@ -72,7 +74,7 @@ class _TicTacToeState extends State<TicTacToe> {
                                               .headlineLarge
                                               ?.copyWith(
                                                   fontWeight: FontWeight.bold)),
-                                      Text(oScore.toString(),
+                                      Text(game.score2.toString(),
                                           style: Theme.of(context)
                                               .textTheme
                                               .titleLarge)
@@ -80,7 +82,7 @@ class _TicTacToeState extends State<TicTacToe> {
                               ]),
                           const Divider(height: 40),
                           IgnorePointer(
-                              ignoring: game.turn == Authentication.user?.uid,
+                              ignoring: isUserTurn,
                               child: Container(
                                   decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(20),
@@ -119,7 +121,7 @@ class _TicTacToeState extends State<TicTacToe> {
                               style: ElevatedButton.styleFrom(
                                   backgroundColor:
                                       Theme.of(context).colorScheme.primary),
-                              onPressed: _clearScoreBoard,
+                              onPressed: clearScoreBoard,
                               child: Text("Clear Score Board",
                                   style:
                                       Theme.of(context).textTheme.displaySmall))
@@ -132,20 +134,20 @@ class _TicTacToeState extends State<TicTacToe> {
 
   void tapped(int index) {
     setState(() {
-      if (oTurn && displayElement[index] == '') {
+      if (isUserTurn && displayElement[index] == '') {
         displayElement[index] = 'O';
         filledBoxes++;
-      } else if (!oTurn && displayElement[index] == '') {
+      } else if (!isUserTurn && displayElement[index] == '') {
         displayElement[index] = 'X';
         filledBoxes++;
       }
 
-      oTurn = !oTurn;
-      _checkWinner();
+      Firestore.updateTurn(game);
+      checkWinner();
     });
   }
 
-  void _checkWinner() {
+  void checkWinner() {
     // Checking rows
     if (displayElement[0] == displayElement[1] &&
         displayElement[0] == displayElement[2] &&
@@ -195,25 +197,27 @@ class _TicTacToeState extends State<TicTacToe> {
     }
   }
 
-  void _showWinDialog(String winner) {
-    showDialog(
-        barrierDismissible: false,
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(title: Text("$winner is Winner!!!"), actions: [
-            TextButton(
-                child: const Text("Play Again"),
-                onPressed: () {
-                  _clearBoard();
-                  Navigator.of(context).pop();
-                })
-          ]);
-        });
+  void _showWinDialog(String winner) async {
+    if (winner == 'X') {
+      await Firestore.updateScore1(game);
+    } else if (winner == 'O') {
+      await Firestore.updateScore2(game);
+    }
 
-    if (winner == 'O') {
-      oScore++;
-    } else if (winner == 'X') {
-      xScore++;
+    if (mounted) {
+      showDialog(
+          barrierDismissible: false,
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(title: Text("$winner is Winner!!!"), actions: [
+              TextButton(
+                  child: const Text("Play Again"),
+                  onPressed: () {
+                    clearBoard();
+                    Navigator.of(context).pop();
+                  })
+            ]);
+          });
     }
   }
 
@@ -225,7 +229,7 @@ class _TicTacToeState extends State<TicTacToe> {
           return AlertDialog(title: const Text("Draw"), actions: [
             TextButton(
                 onPressed: () {
-                  _clearBoard();
+                  clearBoard();
                   Navigator.of(context).pop();
                 },
                 child: const Text('Play Again'))
@@ -233,23 +237,14 @@ class _TicTacToeState extends State<TicTacToe> {
         });
   }
 
-  void _clearBoard() {
-    setState(() {
-      for (int i = 0; i < 9; i++) {
-        displayElement[i] = '';
-      }
-    });
+  void clearBoard() {
+    setState(() => displayElement.fillRange(0, 9, ''));
     filledBoxes = 0;
   }
 
-  void _clearScoreBoard() {
-    setState(() {
-      xScore = 0;
-      oScore = 0;
-      for (int i = 0; i < 9; i++) {
-        displayElement[i] = '';
-      }
-    });
+  void clearScoreBoard() {
+    Firestore.clearScoreBoard(game);
+    setState(() => displayElement.fillRange(0, 9, ''));
     filledBoxes = 0;
   }
 }

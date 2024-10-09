@@ -101,10 +101,12 @@ class Firestore {
     await tictactoe.doc(game.id).update({'turn': currentTurn});
   }
 
-  static Future<void> updateScore(GameTicTacToe game) async {
-    await tictactoe
-        .doc(game.id)
-        .update({'score1': game.score1, 'score2': game.score2});
+  static Future<void> updateScore1(GameTicTacToe game) async {
+    await tictactoe.doc(game.id).update({'score1': FieldValue.increment(1)});
+  }
+
+  static Future<void> updateScore2(GameTicTacToe game) async {
+    await tictactoe.doc(game.id).update({'score2': FieldValue.increment(1)});
   }
 
   static Future<void> clearScoreBoard(GameTicTacToe game) async {
