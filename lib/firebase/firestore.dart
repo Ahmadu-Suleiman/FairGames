@@ -94,4 +94,20 @@ class Firestore {
           turn: snapshot.get('turn'),
           score1: snapshot.get('score1'),
           score2: snapshot.get('score2'));
+
+  static Future<void> updateTurn(GameTicTacToe game) async {
+    String currentTurn =
+        game.turn == game.player1 ? game.player2 : game.player1;
+    await tictactoe.doc(game.id).update({'turn': currentTurn});
+  }
+
+  static Future<void> updateScore(GameTicTacToe game) async {
+    await tictactoe
+        .doc(game.id)
+        .update({'score1': game.score1, 'score2': game.score2});
+  }
+
+  static Future<void> clearScoreBoard(GameTicTacToe game) async {
+    await tictactoe.doc(game.id).update({'score1': 0, 'score2': 0});
+  }
 }
