@@ -1,5 +1,6 @@
-import 'package:fairgames/games/tic_tac_toe.dart';
+import 'package:fairgames/routes.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -15,8 +16,7 @@ class HomePage extends StatelessWidget {
               tileColor: Theme.of(context).colorScheme.secondaryContainer,
               leading: const Icon(Icons.grid_view),
               title: const Text('Tic Tac Toe'),
-              onTap: () => Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => const TicTacToe())))
+              onTap: () => context.push(Routes.tictactoe))
         ]));
   }
 }

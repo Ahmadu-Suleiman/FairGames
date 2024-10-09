@@ -1,4 +1,4 @@
-import 'package:fairgames/home_page.dart';
+import 'package:fairgames/routes.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
@@ -15,10 +15,10 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
+        routerConfig: Routes.router,
         title: 'Fair Games',
         theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue)),
-        home: const HomePage());
+            colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue)));
   }
 }
