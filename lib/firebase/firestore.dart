@@ -7,7 +7,7 @@ class Firestore {
   static final lobbies = FirebaseFirestore.instance.collection('lobbies');
   static final players = FirebaseFirestore.instance.collection('players');
 
-  static Stream lobbiesStream() => lobbies.snapshots();
+  static Stream<QuerySnapshot> lobbiesStream() => lobbies.snapshots();
 
   static Future<void> addPlayer(Player player, String id) async =>
       await players.doc(id).set({'username': player.username});
@@ -22,11 +22,21 @@ class Firestore {
     }
   }
 
-  static Future<void> addLobby(Player player, Lobby lobby) async =>
+  static List<Lobby> lobbyListFromSnapshot(QuerySnapshot lobbiesSnapshot) =>
+      lobbiesSnapshot.docs
+          .map((document) => Lobby(
+              id: document.id,
+              name: document['name'],
+              creator: document['creator'],
+              players: document['players']))
+          .toList();
+
+  static Future<void> addLobby(
+          {required String name, required String playerId}) async =>
       await lobbies.add({
-        'name': lobby.name,
-        'creator': player.id,
-        'players': [player.id]
+        'name': name,
+        'creator': playerId,
+        'players': [playerId]
       });
 
   static Future<Lobby> lobby(String id) async {
@@ -38,6 +48,12 @@ class Firestore {
         creator: data['creator'],
         players: data['players']);
   }
+
+  static Future<void> joinLobby(
+          {required String lobbyId, required String playerId}) async =>
+      await lobbies.doc(lobbyId).update({
+        'players': FieldValue.arrayUnion([playerId])
+      });
 
   static Future<void> deleteLobby(Lobby lobby) async =>
       await lobbies.doc(lobby.id).delete();

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 class TicTacToe extends StatefulWidget {
-  const TicTacToe({super.key});
+  const TicTacToe({super.key, required this.lobbyId});
+
+  final String lobbyId;
 
   @override
   State<TicTacToe> createState() => _TicTacToeState();

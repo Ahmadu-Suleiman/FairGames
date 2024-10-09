@@ -10,7 +10,9 @@ class Routes {
         builder: (context, state) => const HomePage(),
         routes: <RouteBase>[
           GoRoute(
-              path: tictactoe, builder: (context, state) => const TicTacToe())
+              path: '$tictactoe/:id',
+              builder: (context, state) =>
+                  TicTacToe(lobbyId: state.pathParameters['name']!))
         ])
   ]);
 }
