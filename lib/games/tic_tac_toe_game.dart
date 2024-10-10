@@ -4,6 +4,7 @@ import 'package:fairgames/models/game_tic_tac_toe.dart';
 import 'package:flutter/material.dart';
 
 import '../models/player.dart';
+import '../widgets/loading.dart';
 
 class TicTacToeGame extends StatefulWidget {
   const TicTacToeGame({super.key, required this.lobbyId});
@@ -16,33 +17,33 @@ class TicTacToeGame extends StatefulWidget {
 
 class _TicTacToeGameState extends State<TicTacToeGame> {
   late Size size;
-  late final Future<GameTicTacToe?> initGame;
   Player? player;
   GameTicTacToe? game;
 
   @override
   void initState() {
     super.initState();
-    initGame = initializeGame(game);
+    initializeGame();
   }
 
   bool get isUserTurn => game?.turn == Authentication.user?.uid;
 
-  Future<GameTicTacToe> initializeGame(GameTicTacToe? game) async {
+  Future<void> initializeGame() async {
     player = await Firestore.player(Authentication.user!.uid);
     game = await Firestore.gameTicTacToe(widget.lobbyId);
-    if (player != null && game == null) {
-      await Firestore.createGameTicTacToe(
-          gameId: widget.lobbyId,
-          player1Id: player!.id,
-          player1Name: player!.username);
-    } else {
-      await Firestore.addPlayerGameTicTacToe(
-          gameId: widget.lobbyId,
-          playerId: player!.id,
-          playerName: player!.username);
+    if (player != null) {
+      if (game == null) {
+        await Firestore.createGameTicTacToe(
+            gameId: widget.lobbyId,
+            player1Id: player!.id,
+            player1Name: player!.username);
+      } else {
+        await Firestore.addPlayerGameTicTacToe(
+            gameId: widget.lobbyId,
+            playerId: player!.id,
+            playerName: player!.username);
+      }
     }
-    return Future.value(game);
   }
 
   @override
@@ -51,28 +52,23 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
 
     return PopScope(
         canPop: false,
-        child: FutureBuilder(
-            future: initGame,
-            builder: (context, snapshot) => snapshot.connectionState ==
-                    ConnectionState.done
-                ? StreamBuilder(
-                    stream: Firestore.tictactoeGameStream(widget.lobbyId),
-                    builder: (context, snapshot) {
-                      if (snapshot.hasData) {
-                        game =
-                            Firestore.ticTacToeGameFromSnapshot(snapshot.data!);
-                        return Scaffold(
-                            appBar: AppBar(
-                                automaticallyImplyLeading: false,
-                                backgroundColor:
-                                    Theme.of(context).colorScheme.primary,
-                                title: const Text('Tic Tac Toe')),
-                            body: body);
-                      } else {
-                        return const Text('B');
-                      }
-                    })
-                : Text(snapshot.error.toString())));
+        child: StreamBuilder(
+            stream: Firestore.tictactoeGameStream(widget.lobbyId),
+            initialData: null,
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                print('update');
+                game = Firestore.ticTacToeGameFromSnapshot(snapshot.data!);
+                return Scaffold(
+                    appBar: AppBar(
+                        automaticallyImplyLeading: false,
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        title: const Text('Tic Tac Toe')),
+                    body: body);
+              } else {
+                return const Loading();
+              }
+            }));
   }
 
   Widget get top =>
@@ -103,7 +99,7 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
           child: Column(children: <Widget>[
             top,
             const Divider(height: 40),
-            IgnorePointer(ignoring: isUserTurn, child: board),
+            board,
             const SizedBox(height: 40),
             FilledButton.tonal(
                 style: ElevatedButton.styleFrom(
@@ -145,10 +141,13 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
                                       fontWeight: FontWeight.bold))))))));
 
   void tapped(int index) async {
+    if (isUserTurn) {}
     if (isUserTurn && game!.boardItems[index] == '') {
+      print('tap');
       game!.boardItems[index] = 'O';
       await Firestore.updateFilled(game!);
     } else if (!isUserTurn && game!.boardItems[index] == '') {
+      print('dont tap');
       game!.boardItems[index] = 'X';
       await Firestore.updateFilled(game!);
     }

@@ -93,6 +93,26 @@ class Firestore {
         'filled': 0
       });
 
+  static Future<GameTicTacToe?> gameTicTacToe(String gameId) async {
+    final data = await games.doc(gameId).get();
+
+    try {
+      return GameTicTacToe(
+          id: gameId,
+          player1: data['player1'],
+          player2: data['player2'],
+          player1Name: data['player1Name'],
+          player2Name: data['player2Name'],
+          turn: data['turn'],
+          score1: data['score1'],
+          score2: data['score2'],
+          boardItems: toList(data['boardItems']),
+          filled: data['filled']);
+    } catch (e) {
+      return null;
+    }
+  }
+
   static Future<void> addPlayerGameTicTacToe(
       {required String gameId, String playerId = '', playerName = ''}) async {
     final game = await gameTicTacToe(gameId);
@@ -100,24 +120,8 @@ class Firestore {
     if (game?.player1 != playerId && game?.player2 != playerId) {
       await games
           .doc(gameId)
-          .set({'player2': playerId, 'player2Name': playerName});
+          .update({'player2': playerId, 'player2Name': playerName});
     }
-  }
-
-  static Future<GameTicTacToe?> gameTicTacToe(String gameId) async {
-    final data = await games.doc(gameId).get();
-
-    return GameTicTacToe(
-        id: gameId,
-        player1: data['player1'],
-        player2: data['player2'],
-        player1Name: data['player1Name'],
-        player2Name: data['player2Name'],
-        turn: data['turn'],
-        score1: data['score1'],
-        score2: data['score2'],
-        boardItems: toList(data['boardItems']),
-        filled: data['filled']);
   }
 
   static GameTicTacToe? ticTacToeGameFromSnapshot(DocumentSnapshot snapshot) =>
