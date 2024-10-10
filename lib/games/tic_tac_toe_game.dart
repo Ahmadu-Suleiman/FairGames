@@ -1,8 +1,9 @@
 import 'package:fairgames/firebase/authentication.dart';
 import 'package:fairgames/firebase/firestore.dart';
 import 'package:fairgames/models/game_tic_tac_toe.dart';
-import 'package:fairgames/models/lobby.dart';
 import 'package:flutter/material.dart';
+
+import '../models/player.dart';
 
 class TicTacToeGame extends StatefulWidget {
   const TicTacToeGame({super.key, required this.lobbyId});
@@ -14,75 +15,70 @@ class TicTacToeGame extends StatefulWidget {
 }
 
 class _TicTacToeGameState extends State<TicTacToeGame> {
-  late Lobby lobby;
-  GameTicTacToe? game;
-
   late Size size;
-  List<String> displayElement = ['', '', '', '', '', '', '', '', ''];
-  int filledBoxes = 0;
+  late final Future<GameTicTacToe?> initGame;
+  Player? player;
+  GameTicTacToe? game;
 
   @override
   void initState() {
     super.initState();
-    Firestore.lobby(widget.lobbyId)
-        .then((lobby) => setState(() => this.lobby = lobby));
+    initGame = initializeGame(game);
   }
 
   bool get isUserTurn => game?.turn == Authentication.user?.uid;
+
+  Future<GameTicTacToe> initializeGame(GameTicTacToe? game) async {
+    player = await Firestore.player(Authentication.user!.uid);
+    game = await Firestore.gameTicTacToe(widget.lobbyId);
+    if (player != null && game == null) {
+      await Firestore.createGameTicTacToe(
+          gameId: widget.lobbyId,
+          player1Id: player!.id,
+          player1Name: player!.username);
+    } else {
+      await Firestore.addPlayerGameTicTacToe(
+          gameId: widget.lobbyId,
+          playerId: player!.id,
+          playerName: player!.username);
+    }
+    return Future.value(game);
+  }
 
   @override
   Widget build(BuildContext context) {
     size = MediaQuery.sizeOf(context);
 
     return PopScope(
-      canPop: false,
-      child: StreamBuilder(
-          stream: Firestore.tictactoeStream(widget.lobbyId),
-          builder: (context, snapshot) {
-            if (snapshot.hasData) {
-              game = Firestore.gameTicTacToeFromSnapshot(snapshot.data!);
-
-              if (game == null) {
-                Future.microtask(() => Firestore.createGameTicTacToe(
-                    gameId: lobby.id, player1Id: lobby.players[0]));
-                return Container();
-              } else {
-                return Scaffold(
-                    appBar: AppBar(
-                        automaticallyImplyLeading: false,
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        title: const Text('Tic Tac Toe')),
-                    body: SingleChildScrollView(
-                        child: Padding(
-                            padding: const EdgeInsets.all(20),
-                            child: Column(children: <Widget>[
-                              top,
-                              const Divider(height: 40),
-                              IgnorePointer(ignoring: isUserTurn, child: board),
-                              const SizedBox(height: 40),
-                              FilledButton.tonal(
-                                  style: ElevatedButton.styleFrom(
-                                      backgroundColor: Theme.of(context)
-                                          .colorScheme
-                                          .primary),
-                                  onPressed: clearScoreBoard,
-                                  child: Text("Clear Score Board",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .displaySmall))
-                            ]))));
-              }
-            } else {
-              return const Center(child: CircularProgressIndicator());
-            }
-          }),
-    );
+        canPop: false,
+        child: FutureBuilder(
+            future: initGame,
+            builder: (context, snapshot) => snapshot.connectionState ==
+                    ConnectionState.done
+                ? StreamBuilder(
+                    stream: Firestore.tictactoeGameStream(widget.lobbyId),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData) {
+                        game =
+                            Firestore.ticTacToeGameFromSnapshot(snapshot.data!);
+                        return Scaffold(
+                            appBar: AppBar(
+                                automaticallyImplyLeading: false,
+                                backgroundColor:
+                                    Theme.of(context).colorScheme.primary,
+                                title: const Text('Tic Tac Toe')),
+                            body: body);
+                      } else {
+                        return const Text('B');
+                      }
+                    })
+                : Text(snapshot.error.toString())));
   }
 
   Widget get top =>
       Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: <Widget>[
         Column(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
-          Text('Player X',
+          Text(game!.player1Name,
               style: Theme.of(context)
                   .textTheme
                   .headlineLarge
@@ -91,7 +87,7 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
               style: Theme.of(context).textTheme.titleLarge)
         ]),
         Column(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
-          Text('Player O',
+          Text(game!.player2Name,
               style: Theme.of(context)
                   .textTheme
                   .headlineLarge
@@ -100,6 +96,22 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
               style: Theme.of(context).textTheme.titleLarge)
         ])
       ]);
+
+  Widget get body => SingleChildScrollView(
+      child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(children: <Widget>[
+            top,
+            const Divider(height: 40),
+            IgnorePointer(ignoring: isUserTurn, child: board),
+            const SizedBox(height: 40),
+            FilledButton.tonal(
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.primary),
+                onPressed: () => Firestore.clear(game!),
+                child: Text("Clear Score Board",
+                    style: Theme.of(context).textTheme.displaySmall))
+          ])));
 
   Widget get board => Container(
       decoration: BoxDecoration(
@@ -125,74 +137,73 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
                           border: Border.all(
                               color: Theme.of(context).colorScheme.outline)),
                       child: Center(
-                          child: Text(displayElement[index],
+                          child: Text(game!.boardItems[index],
                               style: Theme.of(context)
                                   .textTheme
                                   .displayMedium
                                   ?.copyWith(
                                       fontWeight: FontWeight.bold))))))));
 
-  void tapped(int index) {
-    setState(() {
-      if (isUserTurn && displayElement[index] == '') {
-        displayElement[index] = 'O';
-        filledBoxes++;
-      } else if (!isUserTurn && displayElement[index] == '') {
-        displayElement[index] = 'X';
-        filledBoxes++;
-      }
+  void tapped(int index) async {
+    if (isUserTurn && game!.boardItems[index] == '') {
+      game!.boardItems[index] = 'O';
+      await Firestore.updateFilled(game!);
+    } else if (!isUserTurn && game!.boardItems[index] == '') {
+      game!.boardItems[index] = 'X';
+      await Firestore.updateFilled(game!);
+    }
 
-      Firestore.updateTurn(game!);
-      checkWinner();
-    });
+    await Firestore.updateTurn(game!);
+    await Firestore.updateBoard(game!);
+    checkWinner();
   }
 
   void checkWinner() {
     // Checking rows
-    if (displayElement[0] == displayElement[1] &&
-        displayElement[0] == displayElement[2] &&
-        displayElement[0] != '') {
-      showWinDialog(displayElement[0]);
+    if (game!.boardItems[0] == game!.boardItems[1] &&
+        game!.boardItems[0] == game!.boardItems[2] &&
+        game!.boardItems[0] != '') {
+      showWinDialog(game!.boardItems[0]);
     }
-    if (displayElement[3] == displayElement[4] &&
-        displayElement[3] == displayElement[5] &&
-        displayElement[3] != '') {
-      showWinDialog(displayElement[3]);
+    if (game!.boardItems[3] == game!.boardItems[4] &&
+        game!.boardItems[3] == game!.boardItems[5] &&
+        game!.boardItems[3] != '') {
+      showWinDialog(game!.boardItems[3]);
     }
-    if (displayElement[6] == displayElement[7] &&
-        displayElement[6] == displayElement[8] &&
-        displayElement[6] != '') {
-      showWinDialog(displayElement[6]);
+    if (game!.boardItems[6] == game!.boardItems[7] &&
+        game!.boardItems[6] == game!.boardItems[8] &&
+        game!.boardItems[6] != '') {
+      showWinDialog(game!.boardItems[6]);
     }
 
     // Checking Column
-    if (displayElement[0] == displayElement[3] &&
-        displayElement[0] == displayElement[6] &&
-        displayElement[0] != '') {
-      showWinDialog(displayElement[0]);
+    if (game!.boardItems[0] == game!.boardItems[3] &&
+        game!.boardItems[0] == game!.boardItems[6] &&
+        game!.boardItems[0] != '') {
+      showWinDialog(game!.boardItems[0]);
     }
-    if (displayElement[1] == displayElement[4] &&
-        displayElement[1] == displayElement[7] &&
-        displayElement[1] != '') {
-      showWinDialog(displayElement[1]);
+    if (game!.boardItems[1] == game!.boardItems[4] &&
+        game!.boardItems[1] == game!.boardItems[7] &&
+        game!.boardItems[1] != '') {
+      showWinDialog(game!.boardItems[1]);
     }
-    if (displayElement[2] == displayElement[5] &&
-        displayElement[2] == displayElement[8] &&
-        displayElement[2] != '') {
-      showWinDialog(displayElement[2]);
+    if (game!.boardItems[2] == game!.boardItems[5] &&
+        game!.boardItems[2] == game!.boardItems[8] &&
+        game!.boardItems[2] != '') {
+      showWinDialog(game!.boardItems[2]);
     }
 
     // Checking Diagonal
-    if (displayElement[0] == displayElement[4] &&
-        displayElement[0] == displayElement[8] &&
-        displayElement[0] != '') {
-      showWinDialog(displayElement[0]);
+    if (game!.boardItems[0] == game!.boardItems[4] &&
+        game!.boardItems[0] == game!.boardItems[8] &&
+        game!.boardItems[0] != '') {
+      showWinDialog(game!.boardItems[0]);
     }
-    if (displayElement[2] == displayElement[4] &&
-        displayElement[2] == displayElement[6] &&
-        displayElement[2] != '') {
-      showWinDialog(displayElement[2]);
-    } else if (filledBoxes == 9) {
+    if (game!.boardItems[2] == game!.boardItems[4] &&
+        game!.boardItems[2] == game!.boardItems[6] &&
+        game!.boardItems[2] != '') {
+      showWinDialog(game!.boardItems[2]);
+    } else if (game!.filled == 9) {
       showDrawDialog();
     }
   }
@@ -213,7 +224,7 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
               TextButton(
                   child: const Text("Play Again"),
                   onPressed: () {
-                    clearBoard();
+                    Firestore.clearBoard(game!);
                     Navigator.of(context).pop();
                   })
             ]);
@@ -229,22 +240,11 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
           return AlertDialog(title: const Text("Draw"), actions: [
             TextButton(
                 onPressed: () {
-                  clearBoard();
+                  Firestore.clearBoard(game!);
                   Navigator.of(context).pop();
                 },
                 child: const Text('Play Again'))
           ]);
         });
-  }
-
-  void clearBoard() {
-    setState(() => displayElement.fillRange(0, 9, ''));
-    filledBoxes = 0;
-  }
-
-  void clearScoreBoard() {
-    Firestore.clearScoreBoard(game!);
-    setState(() => displayElement.fillRange(0, 9, ''));
-    filledBoxes = 0;
   }
 }

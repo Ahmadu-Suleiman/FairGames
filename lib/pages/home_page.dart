@@ -51,7 +51,7 @@ class _HomePageState extends State<HomePage> {
           barrierDismissible: false,
           builder: (BuildContext context) {
             return AlertDialog(
-                title: const Text('Add Player'),
+                title: const Text('Create Player'),
                 content: TextField(
                     controller: controller,
                     decoration: const InputDecoration(
@@ -63,7 +63,7 @@ class _HomePageState extends State<HomePage> {
                           ? null
                           : () {
                               Navigator.of(context).pop();
-                              Firestore.addPlayer(Player(
+                              Firestore.createPlayer(Player(
                                   id: Authentication.user!.uid,
                                   username: controller.text,
                                   tictactoe: ''));

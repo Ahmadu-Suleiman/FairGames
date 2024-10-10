@@ -36,11 +36,11 @@ class _TicTacToeLobbyPageState extends State<TicTacToeLobbyPage> {
                       final player = Firestore.playerFromSnapshot(doc);
 
                       Future.microtask(() {
-                        if (player != null &&
-                            player.tictactoe.isNotEmpty &&
-                            context.mounted) {
-                          context
-                              .push('${Routes.tictactoe}/${player.tictactoe}');
+                        if (player != null && context.mounted) {
+                          if (player.tictactoe.isNotEmpty) {
+                            context.push(
+                                '${Routes.tictactoe}/${player.tictactoe}');
+                          }
                         }
                       });
 
