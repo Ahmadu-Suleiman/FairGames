@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fairgames/models/game_tic_tac_toe.dart';
 import 'package:fairgames/models/lobby.dart';
 import 'package:fairgames/models/player.dart';
+import 'package:fairgames/util.dart';
 
 class Firestore {
   static final firestore = FirebaseFirestore.instance;
@@ -12,21 +13,35 @@ class Firestore {
 
   static Stream<QuerySnapshot> lobbiesStream() => lobbies.snapshots();
 
+  static Stream<DocumentSnapshot> playerStream(String id) =>
+      players.doc(id).snapshots();
+
   static Stream<DocumentSnapshot> tictactoeStream(String id) =>
       tictactoe.doc(id).snapshots();
 
-  static Future<void> addPlayer(Player player, String id) async =>
-      await players.doc(id).set({'username': player.username});
+  static Future<void> addPlayer(Player player) async => await players
+      .doc(player.id)
+      .set({'username': player.username, 'tictactoe': ''});
+
+  static Future<void> setActiveTicTacToe(Player player) async =>
+      await players.doc(player.id).update({'tictactoe': player.tictactoe});
 
   static Future<Player?> player(String id) async {
     try {
       final data = await players.doc(id).get();
-
-      return Player(id: id, username: data['username']);
+      return Player(id: id, username: data['username'], tictactoe: '');
     } catch (e) {
       return null;
     }
   }
+
+  static Player? playerFromSnapshot(DocumentSnapshot? snapshot) =>
+      snapshot == null
+          ? null
+          : Player(
+              id: snapshot.id,
+              username: snapshot.get('username'),
+              tictactoe: snapshot.get('tictactoe'));
 
   static List<Lobby> lobbyListFromSnapshot(QuerySnapshot lobbiesSnapshot) =>
       lobbiesSnapshot.docs
@@ -34,16 +49,12 @@ class Firestore {
               id: document.id,
               name: document['name'],
               creator: document['creator'],
-              players: document['players']))
+              players: toList(document['players'])))
           .toList();
 
   static Future<void> addLobby(
           {required String name, required String playerId}) async =>
-      await lobbies.add({
-        'name': name,
-        'creator': playerId,
-        'players': [playerId]
-      });
+      await lobbies.add({'name': name, 'creator': playerId, 'players': []});
 
   static Future<Lobby> lobby(String id) async {
     final data = await lobbies.doc(id).get();
@@ -52,7 +63,7 @@ class Firestore {
         id: id,
         name: data['name'],
         creator: data['creator'],
-        players: data['players']);
+        players: toList(data['players']));
   }
 
   static Future<void> joinLobby(
@@ -65,7 +76,9 @@ class Firestore {
       await lobbies.doc(lobby.id).delete();
 
   static Future<void> createGameTicTacToe(
-          String gameId, String player1Id, String player2Id) async =>
+          {required String gameId,
+          String player1Id = '',
+          String player2Id = ''}) async =>
       await tictactoe.doc(gameId).set({
         'player1': player1Id,
         'player2': player2Id,
@@ -74,7 +87,7 @@ class Firestore {
         'score2': 0
       });
 
-  static Future<GameTicTacToe> gameTicTacToe(String gameId) async {
+  static Future<GameTicTacToe?> gameTicTacToe(String gameId) async {
     final data = await tictactoe.doc(gameId).get();
 
     return GameTicTacToe(
@@ -86,14 +99,16 @@ class Firestore {
         score2: data['score2']);
   }
 
-  static GameTicTacToe gameTicTacToeFromSnapshot(DocumentSnapshot snapshot) =>
-      GameTicTacToe(
-          id: snapshot.id,
-          player1: snapshot.get('player1'),
-          player2: snapshot.get('player2'),
-          turn: snapshot.get('turn'),
-          score1: snapshot.get('score1'),
-          score2: snapshot.get('score2'));
+  static GameTicTacToe? gameTicTacToeFromSnapshot(DocumentSnapshot snapshot) =>
+      snapshot.exists
+          ? GameTicTacToe(
+              id: snapshot.id,
+              player1: snapshot.get('player1'),
+              player2: snapshot.get('player2'),
+              turn: snapshot.get('turn'),
+              score1: snapshot.get('score1'),
+              score2: snapshot.get('score2'))
+          : null;
 
   static Future<void> updateTurn(GameTicTacToe game) async {
     String currentTurn =
