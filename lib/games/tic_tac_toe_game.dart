@@ -162,8 +162,6 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
       onPressed: () async {
         setState(() => loading = true);
         await Firestore.leaveGame(game!);
-        setState(() => loading = false);
-        if (mounted) context.pop(context);
       },
       child:
           Text("Leave game", style: Theme.of(context).textTheme.displaySmall));
@@ -182,8 +180,6 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
             onPressed: () async {
               setState(() => loading = true);
               await Firestore.endGame(game!);
-              setState(() => loading = false);
-              if (mounted) context.pop(context);
             },
             child: Text("End game",
                 style: Theme.of(context).textTheme.displaySmall))
@@ -254,11 +250,9 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
       if (winner == 'X' && game?.player1 == player?.id) {
         snackBar(context, '${game!.player1Name} is Winner!');
         Firestore.updateScore1(game!);
-        print('X');
       } else if (winner == 'O' && game?.player1 != player?.id) {
         snackBar(context, '${game!.player2Name} is Winner!');
         Firestore.updateScore2(game!);
-        print('0');
       }
     }
   }

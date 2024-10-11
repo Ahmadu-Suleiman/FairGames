@@ -152,7 +152,9 @@ class Firestore {
 
   static Future<void> endGame(GameTicTacToe game) async {
     await players.doc(game.player1).update({'tictactoe': ''});
-    await players.doc(game.player2).update({'tictactoe': ''});
+    if (game.player2.isNotEmpty) {
+      await players.doc(game.player2).update({'tictactoe': ''});
+    }
     await games.doc(game.id).delete();
     await lobbies.doc(game.id).delete();
   }
