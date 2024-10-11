@@ -59,15 +59,15 @@ class _HomePageState extends State<HomePage> {
                         labelText: 'Player name')),
                 actions: <Widget>[
                   TextButton(
-                      onPressed: controller.text.isNotEmpty
-                          ? null
-                          : () {
-                              Navigator.of(context).pop();
-                              Firestore.createPlayer(Player(
-                                  id: Authentication.user!.uid,
-                                  username: controller.text,
-                                  tictactoe: ''));
-                            },
+                      onPressed: () {
+                        if (controller.text.isNotEmpty) {
+                          Navigator.of(context).pop();
+                          Firestore.createPlayer(Player(
+                              id: Authentication.user!.uid,
+                              username: controller.text,
+                              tictactoe: ''));
+                        }
+                      },
                       child: const Text('Create'))
                 ]);
           });

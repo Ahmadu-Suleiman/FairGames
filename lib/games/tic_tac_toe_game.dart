@@ -246,12 +246,17 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
 
   void showWinner(String winner) async {
     await Firestore.clearBoard(game!);
+
     if (mounted) {
-      if (winner == 'X' && game?.player1 == player?.id) {
+      if (winner == 'X') {
         snackBar(context, '${game!.player1Name} is Winner!');
-        Firestore.updateScore1(game!);
-      } else if (winner == 'O' && game?.player1 != player?.id) {
+      } else if (winner == 'O') {
         snackBar(context, '${game!.player2Name} is Winner!');
+      }
+
+      if (winner == 'X' && game?.player1 == player?.id) {
+        Firestore.updateScore1(game!);
+      } else if (winner == 'O' && game?.player2 != player?.id) {
         Firestore.updateScore2(game!);
       }
     }
