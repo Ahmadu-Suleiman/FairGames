@@ -122,7 +122,9 @@ class Firestore {
   }
 
   static Future<void> addPlayerGameTicTacToe(
-      {required String gameId, String playerId = '', playerName = ''}) async {
+      {required String gameId,
+      required String playerId,
+      required playerName}) async {
     final game = await gameTicTacToe(gameId);
 
     if (game!.isNotPlayer(playerId)) {

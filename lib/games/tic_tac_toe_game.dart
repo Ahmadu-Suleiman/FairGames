@@ -30,7 +30,6 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
   @override
   Widget build(BuildContext context) {
     size = MediaQuery.sizeOf(context);
-
     return PopScope(
         canPop: false,
         child: FutureBuilder(
@@ -54,7 +53,7 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
           game = Firestore.ticTacToeGameFromSnapshot(snapshot.data!);
           if (game != null) checkWinner();
 
-          if (game?.isNotPlayer(Authentication.userId) ?? true) {
+          if (game?.isNotPlayer(player!.id) ?? true) {
             Future.microtask(() {
               if (context.mounted) {
                 context.pop(context);

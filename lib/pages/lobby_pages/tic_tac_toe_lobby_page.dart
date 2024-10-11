@@ -18,7 +18,7 @@ class TicTacToeLobbyPage extends StatefulWidget {
 }
 
 class _TicTacToeLobbyPageState extends State<TicTacToeLobbyPage> {
-  late final Player player;
+  late Player player;
   final logger = Logger();
   bool loading = false;
 
@@ -28,6 +28,12 @@ class _TicTacToeLobbyPageState extends State<TicTacToeLobbyPage> {
         future: Firestore.player(Authentication.userId),
         builder: (context, futureSnapshot) {
           if (futureSnapshot.hasData) {
+            player = futureSnapshot.data!;
+            Future.microtask(() {
+              if (player.tictactoe.isNotEmpty && context.mounted) {
+                context.push('${Routes.tictactoe}/${player.tictactoe}');
+              }
+            });
             return loading
                 ? const Loading()
                 : Scaffold(
@@ -35,16 +41,6 @@ class _TicTacToeLobbyPageState extends State<TicTacToeLobbyPage> {
                     body: StreamBuilder(
                         stream: Firestore.lobbiesStream(),
                         builder: (context, snapshot) {
-                          player = futureSnapshot.data!;
-
-                          Future.microtask(() {
-                            if (player.tictactoe.isNotEmpty &&
-                                context.mounted) {
-                              context.push(
-                                  '${Routes.tictactoe}/${player.tictactoe}');
-                            }
-                          });
-
                           if (snapshot.hasData) {
                             final lobbies =
                                 Firestore.lobbyListFromSnapshot(snapshot.data!);
@@ -146,10 +142,14 @@ class _TicTacToeLobbyPageState extends State<TicTacToeLobbyPage> {
     } else {
       Navigator.of(context).pop();
       setState(() => loading = true);
+      await Firestore.joinLobby(lobbyId: lobby.id, playerId: player.id);
+      await Firestore.addPlayerGameTicTacToe(
+          gameId: lobby.id, playerId: player.id, playerName: player.username);
+
       player.tictactoe = lobby.id;
-      await Firestore.joinLobby(
-          lobbyId: lobby.id, playerId: Authentication.user!.uid);
       await Firestore.setActiveTicTacToe(player);
+      logger.d(player.id);
+
       setState(() => loading = false);
     }
   }
