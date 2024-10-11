@@ -148,8 +148,6 @@ class _TicTacToeLobbyPageState extends State<TicTacToeLobbyPage> {
 
       player.tictactoe = lobby.id;
       await Firestore.setActiveTicTacToe(player);
-      logger.d(player.id);
-
       setState(() => loading = false);
     }
   }
