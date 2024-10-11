@@ -133,36 +133,41 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
             if (player!.id == game!.creator) controls
           ])));
 
-  Widget get board => Container(
-      decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          color: Theme.of(context).colorScheme.surfaceContainer),
-      padding: const EdgeInsets.all(20),
-      child: GridView.count(
-          childAspectRatio: size.width / (size.height - 400),
-          shrinkWrap: true,
-          crossAxisCount: 3,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          children: List.generate(
-              9,
-              (index) => GestureDetector(
-                  onTap: () => tapped(index),
-                  child: Container(
-                      width: 200,
-                      height: 200,
-                      decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primaryContainer,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                              color: Theme.of(context).colorScheme.outline)),
-                      child: Center(
-                          child: Text(game!.boardItems[index],
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .displayMedium
-                                  ?.copyWith(
-                                      fontWeight: FontWeight.bold))))))));
+  Widget get board => IgnorePointer(
+      ignoring: game!.notAllPLayers,
+      child: Container(
+          decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: Theme.of(context).colorScheme.surfaceContainer),
+          padding: const EdgeInsets.all(20),
+          child: GridView.count(
+              childAspectRatio: size.width / (size.height - 400),
+              shrinkWrap: true,
+              crossAxisCount: 3,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              children: List.generate(
+                  9,
+                  (index) => GestureDetector(
+                      onTap: () => tapped(index),
+                      child: Container(
+                          width: 200,
+                          height: 200,
+                          decoration: BoxDecoration(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .primaryContainer,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                  color:
+                                      Theme.of(context).colorScheme.outline)),
+                          child: Center(
+                              child: Text(game!.boardItems[index],
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .displayMedium
+                                      ?.copyWith(
+                                          fontWeight: FontWeight.bold)))))))));
 
   Widget get leaveGame => FilledButton.tonal(
       style: ElevatedButton.styleFrom(
@@ -212,42 +217,37 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
         game!.boardItems[0] == game!.boardItems[2] &&
         game!.boardItems[0] != '') {
       showWinner(game!.boardItems[0]);
-    }
-    if (game!.boardItems[3] == game!.boardItems[4] &&
+    } else if (game!.boardItems[3] == game!.boardItems[4] &&
         game!.boardItems[3] == game!.boardItems[5] &&
         game!.boardItems[3] != '') {
       showWinner(game!.boardItems[3]);
-    }
-    if (game!.boardItems[6] == game!.boardItems[7] &&
+    } else if (game!.boardItems[6] == game!.boardItems[7] &&
         game!.boardItems[6] == game!.boardItems[8] &&
         game!.boardItems[6] != '') {
       showWinner(game!.boardItems[6]);
     }
 
     // Checking Column
-    if (game!.boardItems[0] == game!.boardItems[3] &&
+    else if (game!.boardItems[0] == game!.boardItems[3] &&
         game!.boardItems[0] == game!.boardItems[6] &&
         game!.boardItems[0] != '') {
       showWinner(game!.boardItems[0]);
-    }
-    if (game!.boardItems[1] == game!.boardItems[4] &&
+    } else if (game!.boardItems[1] == game!.boardItems[4] &&
         game!.boardItems[1] == game!.boardItems[7] &&
         game!.boardItems[1] != '') {
       showWinner(game!.boardItems[1]);
-    }
-    if (game!.boardItems[2] == game!.boardItems[5] &&
+    } else if (game!.boardItems[2] == game!.boardItems[5] &&
         game!.boardItems[2] == game!.boardItems[8] &&
         game!.boardItems[2] != '') {
       showWinner(game!.boardItems[2]);
     }
 
     // Checking Diagonal
-    if (game!.boardItems[0] == game!.boardItems[4] &&
+    else if (game!.boardItems[0] == game!.boardItems[4] &&
         game!.boardItems[0] == game!.boardItems[8] &&
         game!.boardItems[0] != '') {
       showWinner(game!.boardItems[0]);
-    }
-    if (game!.boardItems[2] == game!.boardItems[4] &&
+    } else if (game!.boardItems[2] == game!.boardItems[4] &&
         game!.boardItems[2] == game!.boardItems[6] &&
         game!.boardItems[2] != '') {
       showWinner(game!.boardItems[2]);

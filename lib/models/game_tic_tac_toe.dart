@@ -16,6 +16,8 @@ class GameTicTacToe {
   bool isNotPlayer(String playerId) =>
       player1 != playerId && player2 != playerId;
 
+  bool get notAllPLayers => player1.isEmpty || player2.isEmpty;
+
   GameTicTacToe(
       {required this.id,
       required this.creator,
