@@ -117,7 +117,7 @@ class Firestore {
       {required String gameId, String playerId = '', playerName = ''}) async {
     final game = await gameTicTacToe(gameId);
 
-    if (game?.player1 != playerId && game?.player2 != playerId) {
+    if (game!.isNotPlayer(playerId)) {
       await games
           .doc(gameId)
           .update({'player2': playerId, 'player2Name': playerName});

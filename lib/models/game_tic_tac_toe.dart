@@ -12,6 +12,9 @@ class GameTicTacToe {
 
   String get turnName => turn == player1 ? player1Name : player2Name;
 
+  bool isNotPlayer(String playerId) =>
+      player1 != playerId && player2 != playerId;
+
   GameTicTacToe(
       {required this.id,
       required this.player1,
