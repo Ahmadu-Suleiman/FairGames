@@ -26,7 +26,7 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
     initializeGame();
   }
 
-  bool get isUserTurn => game?.turn == Authentication.user?.uid;
+  bool get isUserTurn => game?.turn == player?.id;
 
   Future<void> initializeGame() async {
     player = await Firestore.player(Authentication.user!.uid);
@@ -58,6 +58,7 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
             builder: (context, snapshot) {
               if (snapshot.hasData) {
                 print('update');
+                print(game?.boardItems.toString());
                 game = Firestore.ticTacToeGameFromSnapshot(snapshot.data!);
                 return Scaffold(
                     appBar: AppBar(
@@ -141,20 +142,19 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
                                       fontWeight: FontWeight.bold))))))));
 
   void tapped(int index) async {
-    if (isUserTurn) {}
     if (isUserTurn && game!.boardItems[index] == '') {
       print('tap');
-      game!.boardItems[index] = 'O';
-      await Firestore.updateFilled(game!);
-    } else if (!isUserTurn && game!.boardItems[index] == '') {
-      print('dont tap');
-      game!.boardItems[index] = 'X';
-      await Firestore.updateFilled(game!);
-    }
+      if (player?.id == game?.player1) {
+        game!.boardItems[index] = 'X';
+      } else {
+        game!.boardItems[index] = 'O';
+      }
 
-    await Firestore.updateTurn(game!);
-    await Firestore.updateBoard(game!);
-    checkWinner();
+      await Firestore.updateBoard(game!);
+      await Firestore.updateFilled(game!);
+      await Firestore.updateTurn(game!);
+      checkWinner();
+    }
   }
 
   void checkWinner() {
