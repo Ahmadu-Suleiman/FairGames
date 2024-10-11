@@ -6,6 +6,7 @@ import 'package:fairgames/util.dart';
 import 'package:fairgames/widgets/loading.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:logger/logger.dart';
 
 import '../../models/player.dart';
 
@@ -17,6 +18,7 @@ class TicTacToeLobbyPage extends StatefulWidget {
 }
 
 class _TicTacToeLobbyPageState extends State<TicTacToeLobbyPage> {
+  final logger = Logger();
   bool loading = false;
 
   @override
@@ -43,32 +45,32 @@ class _TicTacToeLobbyPageState extends State<TicTacToeLobbyPage> {
                             }
                           });
 
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
+                          if (snapshot.hasData) {
+                            final lobbies =
+                                Firestore.lobbyListFromSnapshot(snapshot.data!);
+
+                            return lobbies.isEmpty
+                                ? Center(
+                                    child: TextButton(
+                                        onPressed: createLobbyDialog,
+                                        child: const Text('Add a new lobby')))
+                                : ListView.builder(
+                                    itemCount: lobbies.length,
+                                    itemBuilder: (context, index) {
+                                      final lobby = lobbies[index];
+                                      return ListTile(
+                                          leading: const Icon(Icons.room),
+                                          title: Text(lobby.name),
+                                          subtitle: Text(
+                                              '${lobby.players.length}/${2}'),
+                                          onTap: () =>
+                                              showJoinDialog(lobby, player!));
+                                    });
+                          } else {
+                            logger.e(snapshot.stackTrace);
                             return const Center(
                                 child: CircularProgressIndicator());
                           }
-
-                          if (snapshot.hasError) {
-                            return Center(
-                                child: Text('Error: ${snapshot.error}'));
-                          }
-
-                          final lobbies =
-                              Firestore.lobbyListFromSnapshot(snapshot.data!);
-
-                          return ListView.builder(
-                              itemCount: lobbies.length,
-                              itemBuilder: (context, index) {
-                                final lobby = lobbies[index];
-                                return ListTile(
-                                    leading: const Icon(Icons.room),
-                                    title: Text(lobby.name),
-                                    subtitle:
-                                        Text('${lobby.players.length}/${2}'),
-                                    onTap: () =>
-                                        showJoinDialog(lobby, player!));
-                              });
                         }),
                     floatingActionButton: FloatingActionButton(
                         onPressed: createLobbyDialog,
