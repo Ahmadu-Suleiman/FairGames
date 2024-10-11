@@ -73,27 +73,38 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
         }
       });
 
-  Widget get top =>
-      Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: <Widget>[
-        Column(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
-          Text(game!.player1Name,
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineLarge
-                  ?.copyWith(fontWeight: FontWeight.bold)),
-          Text(game!.score1.toString(),
-              style: Theme.of(context).textTheme.titleLarge)
-        ]),
-        Column(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
-          Text(game!.player2Name,
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineLarge
-                  ?.copyWith(fontWeight: FontWeight.bold)),
-          Text(game!.score2.toString(),
-              style: Theme.of(context).textTheme.titleLarge)
-        ])
-      ]);
+  Widget get top => game!.player2.isEmpty
+      ? Text(game!.player1Name,
+          style: Theme.of(context)
+              .textTheme
+              .headlineLarge
+              ?.copyWith(fontWeight: FontWeight.bold))
+      : Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: <Widget>[
+              Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Text(game!.player1Name,
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineLarge
+                            ?.copyWith(fontWeight: FontWeight.bold)),
+                    Text(game!.score1.toString(),
+                        style: Theme.of(context).textTheme.titleLarge)
+                  ]),
+              Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Text(game!.player2Name,
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineLarge
+                            ?.copyWith(fontWeight: FontWeight.bold)),
+                    Text(game!.score2.toString(),
+                        style: Theme.of(context).textTheme.titleLarge)
+                  ])
+            ]);
 
   Widget get body => SingleChildScrollView(
       child: Padding(
@@ -237,16 +248,19 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
     }
   }
 
-  void showWinner(String winner) {
-    if (winner == 'X') {
-      snackBar(context, '${game!.player1Name} is Winner!!!');
-      Firestore.updateScore1(game!);
-    } else if (winner == 'O') {
-      snackBar(context, '${game!.player2Name} is Winner!!!');
-      Firestore.updateScore2(game!);
+  void showWinner(String winner) async {
+    await Firestore.clearBoard(game!);
+    if (mounted) {
+      if (winner == 'X' && game?.player1 == player?.id) {
+        snackBar(context, '${game!.player1Name} is Winner!');
+        Firestore.updateScore1(game!);
+        print('X');
+      } else if (winner == 'O' && game?.player1 != player?.id) {
+        snackBar(context, '${game!.player2Name} is Winner!');
+        Firestore.updateScore2(game!);
+        print('0');
+      }
     }
-
-    Firestore.clearBoard(game!);
   }
 
   void showDraw() {
