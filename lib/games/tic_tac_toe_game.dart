@@ -182,7 +182,12 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
         FilledButton.tonal(
             style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.primary),
-            onPressed: () => Firestore.endGame(game!),
+            onPressed: () async {
+              setState(() => loading = true);
+              await Firestore.endGame(game!);
+              setState(() => loading = false);
+              if (mounted) context.pop(context);
+            },
             child: Text("End game",
                 style: Theme.of(context).textTheme.displaySmall))
       ]);
