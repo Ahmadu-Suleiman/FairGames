@@ -55,9 +55,13 @@ class Firestore {
               players: toList(document['players'])))
           .toList();
 
-  static Future<void> addLobby(
-          {required String name, required String playerId}) async =>
-      await lobbies.add({'name': name, 'creator': playerId, 'players': []});
+  static Future<DocumentReference> addLobby(
+          {required String name, required String id}) async =>
+      await lobbies.add({
+        'name': name,
+        'creator': id,
+        'players': [id]
+      });
 
   static Future<Lobby> lobby(String id) async {
     final data = await lobbies.doc(id).get();
@@ -138,6 +142,7 @@ class Firestore {
       'player2Name': '',
       'score1': 0,
       'score2': 0,
+      'turn': game.player1,
       'boardItems': List.filled(9, ''),
       'filled': 0
     });

@@ -25,31 +25,7 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
   Player? player;
   GameTicTacToe? game;
 
-  @override
-  void initState() {
-    super.initState();
-    initializeGame();
-  }
-
   bool get isUserTurn => game?.turn == player?.id;
-
-  Future<void> initializeGame() async {
-    player = await Firestore.player(Authentication.userId);
-    game = await Firestore.gameTicTacToe(widget.lobbyId);
-    if (player != null) {
-      if (game == null) {
-        await Firestore.createGameTicTacToe(
-            gameId: widget.lobbyId,
-            player1Id: player!.id,
-            player1Name: player!.username);
-      } else {
-        await Firestore.addPlayerGameTicTacToe(
-            gameId: widget.lobbyId,
-            playerId: player!.id,
-            playerName: player!.username);
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,9 +34,10 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
     return PopScope(
         canPop: false,
         child: FutureBuilder(
-            future: initializeGame(),
+            future: Firestore.player(Authentication.userId),
             builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.done) {
+              if (snapshot.hasData) {
+                player = snapshot.data;
                 return loading ? const Loading() : streamBuilder;
               } else {
                 logger.e(snapshot.stackTrace);
@@ -172,7 +149,12 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
   Widget get leaveGame => FilledButton.tonal(
       style: ElevatedButton.styleFrom(
           backgroundColor: Theme.of(context).colorScheme.primary),
-      onPressed: () => Firestore.clear(game!),
+      onPressed: () async {
+        setState(() => loading = true);
+        await Firestore.leaveGame(game!);
+        setState(() => loading = false);
+        if (mounted) context.pop(context);
+      },
       child:
           Text("Leave game", style: Theme.of(context).textTheme.displaySmall));
 
@@ -258,12 +240,10 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
 
   void showWinner(String winner) {
     if (winner == 'X') {
-      showAfterBuild(context,
-          () => snackBar(context, '${game!.player1Name} is Winner!!!'));
+      snackBar(context, '${game!.player1Name} is Winner!!!');
       Firestore.updateScore1(game!);
     } else if (winner == 'O') {
-      showAfterBuild(context,
-          () => snackBar(context, '${game!.player2Name} is Winner!!!'));
+      snackBar(context, '${game!.player2Name} is Winner!!!');
       Firestore.updateScore2(game!);
     }
 

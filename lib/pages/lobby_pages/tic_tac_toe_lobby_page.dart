@@ -18,6 +18,7 @@ class TicTacToeLobbyPage extends StatefulWidget {
 }
 
 class _TicTacToeLobbyPageState extends State<TicTacToeLobbyPage> {
+  late final Player player;
   final logger = Logger();
   bool loading = false;
 
@@ -34,11 +35,10 @@ class _TicTacToeLobbyPageState extends State<TicTacToeLobbyPage> {
                     body: StreamBuilder(
                         stream: Firestore.lobbiesStream(),
                         builder: (context, snapshot) {
-                          final player = futureSnapshot.data;
+                          player = futureSnapshot.data!;
 
                           Future.microtask(() {
-                            if (player != null &&
-                                player.tictactoe.isNotEmpty &&
+                            if (player.tictactoe.isNotEmpty &&
                                 context.mounted) {
                               context.push(
                                   '${Routes.tictactoe}/${player.tictactoe}');
@@ -64,7 +64,7 @@ class _TicTacToeLobbyPageState extends State<TicTacToeLobbyPage> {
                                           subtitle: Text(
                                               '${lobby.players.length}/${2}'),
                                           onTap: () =>
-                                              showJoinDialog(lobby, player!));
+                                              showJoinDialog(lobby, player));
                                     });
                           } else {
                             logger.e(snapshot.stackTrace);
@@ -101,12 +101,7 @@ class _TicTacToeLobbyPageState extends State<TicTacToeLobbyPage> {
                   TextButton(
                       onPressed: controller.text.isNotEmpty
                           ? null
-                          : () {
-                              Firestore.addLobby(
-                                  name: controller.text,
-                                  playerId: Authentication.user!.uid);
-                              Navigator.of(context).pop();
-                            },
+                          : () => createLobby(context, controller),
                       child: const Text('Create'))
                 ]);
           });
@@ -125,23 +120,37 @@ class _TicTacToeLobbyPageState extends State<TicTacToeLobbyPage> {
                     child: const Text('Cancel'),
                     onPressed: () => Navigator.of(context).pop()),
                 TextButton(
-                    child: const Text('Yes'),
-                    onPressed: () async {
-                      if (lobby.players.length > 1) {
-                        Navigator.of(context).pop();
-                        snackBar(context, 'lobby already full!');
-                      } else {
-                        Navigator.of(context).pop();
-                        setState(() => loading = true);
-                        await Firestore.joinLobby(
-                            lobbyId: lobby.id,
-                            playerId: Authentication.user!.uid);
-                        player.tictactoe = lobby.id;
-                        await Firestore.setActiveTicTacToe(player);
-                        setState(() => loading = false);
-                      }
-                    })
+                    child: const Text('Yes'), onPressed: () => joinLobby(lobby))
               ]);
         });
+  }
+
+  void createLobby(
+      BuildContext context, TextEditingController controller) async {
+    Navigator.of(context).pop();
+    setState(() => loading = true);
+    final ref = await Firestore.addLobby(
+        name: controller.text, id: Authentication.userId);
+    await Firestore.createGameTicTacToe(
+        gameId: ref.id, player1Id: player.id, player1Name: player.username);
+
+    player.tictactoe = ref.id;
+    await Firestore.setActiveTicTacToe(player);
+    setState(() => loading = false);
+  }
+
+  void joinLobby(Lobby lobby) async {
+    if (lobby.players.length > 1) {
+      Navigator.of(context).pop();
+      snackBar(context, 'lobby already full!');
+    } else {
+      Navigator.of(context).pop();
+      setState(() => loading = true);
+      player.tictactoe = lobby.id;
+      await Firestore.joinLobby(
+          lobbyId: lobby.id, playerId: Authentication.user!.uid);
+      await Firestore.setActiveTicTacToe(player);
+      setState(() => loading = false);
+    }
   }
 }
