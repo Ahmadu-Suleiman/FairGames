@@ -162,7 +162,7 @@ class Firestore {
   }
 
   static Future<void> clearBoard(GameTicTacToe game) async {
-    await games.doc(game.id).update({'filled': 0});
+    await games.doc(game.id).update({'boardItems': List.filled(9, '')});
   }
 
   static Future<void> clear(GameTicTacToe game) async {

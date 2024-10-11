@@ -101,6 +101,8 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
             top,
             const Divider(height: 40),
             board,
+            const SizedBox(height: 18),
+            Text('Turn: ${game?.turnName}'),
             const SizedBox(height: 40),
             FilledButton.tonal(
                 style: ElevatedButton.styleFrom(
@@ -208,6 +210,7 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
   }
 
   Future<void> showWinDialog(String winner) async {
+    Firestore.clearBoard(game!);
     if (winner == 'X') {
       await Firestore.updateScore1(game!);
     } else if (winner == 'O') {

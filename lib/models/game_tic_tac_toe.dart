@@ -10,6 +10,8 @@ class GameTicTacToe {
   List<String> boardItems;
   int filled;
 
+  String get turnName => turn == player1 ? player1Name : player2Name;
+
   GameTicTacToe(
       {required this.id,
       required this.player1,
