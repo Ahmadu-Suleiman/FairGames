@@ -166,52 +166,52 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
     if (game!.boardItems[0] == game!.boardItems[1] &&
         game!.boardItems[0] == game!.boardItems[2] &&
         game!.boardItems[0] != '') {
-      showWinDialog(game!.boardItems[0]);
+      showWinner(game!.boardItems[0]);
     }
     if (game!.boardItems[3] == game!.boardItems[4] &&
         game!.boardItems[3] == game!.boardItems[5] &&
         game!.boardItems[3] != '') {
-      showWinDialog(game!.boardItems[3]);
+      showWinner(game!.boardItems[3]);
     }
     if (game!.boardItems[6] == game!.boardItems[7] &&
         game!.boardItems[6] == game!.boardItems[8] &&
         game!.boardItems[6] != '') {
-      showWinDialog(game!.boardItems[6]);
+      showWinner(game!.boardItems[6]);
     }
 
     // Checking Column
     if (game!.boardItems[0] == game!.boardItems[3] &&
         game!.boardItems[0] == game!.boardItems[6] &&
         game!.boardItems[0] != '') {
-      showWinDialog(game!.boardItems[0]);
+      showWinner(game!.boardItems[0]);
     }
     if (game!.boardItems[1] == game!.boardItems[4] &&
         game!.boardItems[1] == game!.boardItems[7] &&
         game!.boardItems[1] != '') {
-      showWinDialog(game!.boardItems[1]);
+      showWinner(game!.boardItems[1]);
     }
     if (game!.boardItems[2] == game!.boardItems[5] &&
         game!.boardItems[2] == game!.boardItems[8] &&
         game!.boardItems[2] != '') {
-      showWinDialog(game!.boardItems[2]);
+      showWinner(game!.boardItems[2]);
     }
 
     // Checking Diagonal
     if (game!.boardItems[0] == game!.boardItems[4] &&
         game!.boardItems[0] == game!.boardItems[8] &&
         game!.boardItems[0] != '') {
-      showWinDialog(game!.boardItems[0]);
+      showWinner(game!.boardItems[0]);
     }
     if (game!.boardItems[2] == game!.boardItems[4] &&
         game!.boardItems[2] == game!.boardItems[6] &&
         game!.boardItems[2] != '') {
-      showWinDialog(game!.boardItems[2]);
+      showWinner(game!.boardItems[2]);
     } else if (game!.filled == 9) {
-      showDrawDialog();
+      showDraw();
     }
   }
 
-  Future<void> showWinDialog(String winner) async {
+  Future<void> showWinner(String winner) async {
     await Firestore.clearBoard(
         game!); //todo assign x and o to player one and two
     if (winner == 'X') {
@@ -226,19 +226,10 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
     }
   }
 
-  void showDrawDialog() {
-    showDialog(
-        barrierDismissible: false,
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(title: const Text("Draw"), actions: [
-            TextButton(
-                onPressed: () {
-                  Firestore.clearBoard(game!);
-                  Navigator.of(context).pop();
-                },
-                child: const Text('Play Again'))
-          ]);
-        });
+  void showDraw() {
+    if (mounted) {
+      snackBar(context, 'Draw');
+      Firestore.clearBoard(game!);
+    }
   }
 }
