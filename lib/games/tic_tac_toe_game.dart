@@ -182,7 +182,7 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
         FilledButton.tonal(
             style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.primary),
-            onPressed: () async => Firestore.endGame(game!),
+            onPressed: () => Firestore.endGame(game!),
             child: Text("End game",
                 style: Theme.of(context).textTheme.displaySmall))
       ]);
@@ -251,20 +251,22 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
     }
   }
 
-  void showWinner(String winner) async {
+  void showWinner(String winner) {
     if (winner == 'X') {
-      snackBar(context, '${game!.player1Name} is Winner!!!');
-      await Firestore.updateScore1(game!);
+      showAfterBuild(context,
+          () => snackBar(context, '${game!.player1Name} is Winner!!!'));
+      Firestore.updateScore1(game!);
     } else if (winner == 'O') {
-      snackBar(context, '${game!.player2Name} is Winner!!!');
-      await Firestore.updateScore2(game!);
+      showAfterBuild(context,
+          () => snackBar(context, '${game!.player2Name} is Winner!!!'));
+      Firestore.updateScore2(game!);
     }
 
-    await Firestore.clearBoard(game!);
+    Firestore.clearBoard(game!);
   }
 
-  void showDraw() async {
+  void showDraw() {
     snackBar(context, 'Draw');
-    await Firestore.clearBoard(game!);
+    Firestore.clearBoard(game!);
   }
 }

@@ -8,6 +8,11 @@ void snackBar(BuildContext context, String message) =>
           backgroundColor: Theme.of(context).colorScheme.secondary,
           padding: const EdgeInsets.all(20)));
 
+void showAfterBuild(BuildContext context, Function function) =>
+    Future.microtask(() {
+      if (context.mounted) function;
+    });
+
 List<String> toList(dynamic data) {
   if (data is List<dynamic>) {
     return data.whereType<String>().toList();
