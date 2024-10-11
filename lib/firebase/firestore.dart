@@ -3,8 +3,10 @@ import 'package:fairgames/models/game_tic_tac_toe.dart';
 import 'package:fairgames/models/lobby.dart';
 import 'package:fairgames/models/player.dart';
 import 'package:fairgames/util.dart';
+import 'package:logger/logger.dart';
 
 class Firestore {
+  static final logger = Logger();
   static final firestore = FirebaseFirestore.instance;
   static final lobbies = FirebaseFirestore.instance.collection('lobbies');
   static final players = FirebaseFirestore.instance.collection('players');
@@ -31,6 +33,7 @@ class Firestore {
       return Player(
           id: id, username: data['username'], tictactoe: data['tictactoe']);
     } catch (e) {
+      logger.e(e);
       return null;
     }
   }
@@ -78,15 +81,13 @@ class Firestore {
   static Future<void> createGameTicTacToe(
           {required String gameId,
           String player1Id = '',
-          String player2Id = '',
-          player1Name = '',
-          player2Name = ''}) async =>
+          player1Name = ''}) async =>
       await games.doc(gameId).set({
         'creator': player1Id,
         'player1': player1Id,
-        'player2': player2Id,
         'player1Name': player1Name,
-        'player2Name': player2Name,
+        'player2': '',
+        'player2Name': '',
         'turn': player1Id,
         'score1': 0,
         'score2': 0,
@@ -111,6 +112,7 @@ class Firestore {
           boardItems: toList(data['boardItems']),
           filled: data['filled']);
     } catch (e) {
+      logger.e(e);
       return null;
     }
   }

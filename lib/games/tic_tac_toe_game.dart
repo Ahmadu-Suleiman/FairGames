@@ -4,6 +4,7 @@ import 'package:fairgames/models/game_tic_tac_toe.dart';
 import 'package:fairgames/util.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:logger/logger.dart';
 
 import '../models/player.dart';
 import '../widgets/loading.dart';
@@ -18,6 +19,7 @@ class TicTacToeGame extends StatefulWidget {
 }
 
 class _TicTacToeGameState extends State<TicTacToeGame> {
+  final logger = Logger();
   late Size size;
   Player? player;
   GameTicTacToe? game;
@@ -31,7 +33,7 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
   bool get isUserTurn => game?.turn == player?.id;
 
   Future<void> initializeGame() async {
-    player = await Firestore.player(Authentication.user!.uid);
+    player = await Firestore.player(Authentication.userId);
     game = await Firestore.gameTicTacToe(widget.lobbyId);
     if (player != null) {
       if (game == null) {
@@ -54,27 +56,41 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
 
     return PopScope(
         canPop: false,
-        child: StreamBuilder(
-            stream: Firestore.tictactoeGameStream(widget.lobbyId),
-            initialData: null,
+        child: FutureBuilder(
+            future: initializeGame(),
             builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                game = Firestore.ticTacToeGameFromSnapshot(snapshot.data!);
-                checkWinner();
-                Future.microtask(() {
-                  if (game!.isNotPlayer(Authentication.userId) &&
-                      context.mounted) {
-                    context.pop(context);
-                  }
-                });
+              if (snapshot.connectionState == ConnectionState.done) {
+                return StreamBuilder(
+                    stream: Firestore.tictactoeGameStream(widget.lobbyId),
+                    initialData: null,
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData) {
+                        game =
+                            Firestore.ticTacToeGameFromSnapshot(snapshot.data!);
+                        if (game != null) checkWinner();
 
-                return Scaffold(
-                    appBar: AppBar(
-                        automaticallyImplyLeading: false,
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        title: const Text('Tic Tac Toe')),
-                    body: body);
+                        if (game?.isNotPlayer(Authentication.userId) ?? true) {
+                          Future.microtask(() {
+                            if (context.mounted) {
+                              context.pop(context);
+                            }
+                          });
+                          return const Loading();
+                        }
+
+                        return Scaffold(
+                            appBar: AppBar(
+                                automaticallyImplyLeading: false,
+                                backgroundColor:
+                                    Theme.of(context).colorScheme.primary,
+                                title: const Text('Tic Tac Toe')),
+                            body: body);
+                      } else {
+                        return const Loading();
+                      }
+                    });
               } else {
+                logger.e(snapshot.stackTrace);
                 return const Loading();
               }
             }));
@@ -112,8 +128,8 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
             const SizedBox(height: 18),
             Text('Turn: ${game?.turnName}'),
             const SizedBox(height: 40),
-            if (player?.id != game!.creator) leaveGame,
-            if (player?.id == game!.creator) controls
+            if (player!.id != game!.creator) leaveGame,
+            if (player!.id == game!.creator) controls
           ])));
 
   Widget get board => Container(
