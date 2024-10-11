@@ -1,5 +1,6 @@
 class GameTicTacToe {
   String id;
+  String creator;
   String player1;
   String player2;
   String player1Name;
@@ -17,6 +18,7 @@ class GameTicTacToe {
 
   GameTicTacToe(
       {required this.id,
+      required this.creator,
       required this.player1,
       required this.player2,
       required this.player1Name,

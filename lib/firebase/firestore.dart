@@ -82,6 +82,7 @@ class Firestore {
           player1Name = '',
           player2Name = ''}) async =>
       await games.doc(gameId).set({
+        'creator': player1Id,
         'player1': player1Id,
         'player2': player2Id,
         'player1Name': player1Name,
@@ -99,6 +100,7 @@ class Firestore {
     try {
       return GameTicTacToe(
           id: gameId,
+          creator: data['creator'],
           player1: data['player1'],
           player2: data['player2'],
           player1Name: data['player1Name'],
@@ -124,10 +126,33 @@ class Firestore {
     }
   }
 
+  static Future<void> leaveGame(GameTicTacToe game) async {
+    await players.doc(game.player2).update({'tictactoe': ''});
+    await lobbies.doc(game.id).update({
+      'players': FieldValue.arrayRemove([game.player2])
+    });
+    await games.doc(game.id).update({
+      'player2': '',
+      'player2Name': '',
+      'score1': 0,
+      'score2': 0,
+      'boardItems': List.filled(9, ''),
+      'filled': 0
+    });
+  }
+
+  static Future<void> endGame(GameTicTacToe game) async {
+    await players.doc(game.player1).update({'tictactoe': ''});
+    await players.doc(game.player2).update({'tictactoe': ''});
+    await games.doc(game.id).delete();
+    await lobbies.doc(game.id).delete();
+  }
+
   static GameTicTacToe? ticTacToeGameFromSnapshot(DocumentSnapshot snapshot) =>
       snapshot.exists
           ? GameTicTacToe(
               id: snapshot.id,
+              creator: snapshot.get('creator'),
               player1: snapshot.get('player1'),
               player2: snapshot.get('player2'),
               player1Name: snapshot.get('player1Name'),

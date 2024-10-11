@@ -1,12 +1,11 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fairgames/firebase/authentication.dart';
 import 'package:fairgames/firebase/firestore.dart';
 import 'package:fairgames/models/lobby.dart';
 import 'package:fairgames/routes.dart';
 import 'package:fairgames/util.dart';
+import 'package:fairgames/widgets/loading.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 
 import '../../models/player.dart';
 
@@ -22,54 +21,63 @@ class _TicTacToeLobbyPageState extends State<TicTacToeLobbyPage> {
 
   @override
   Widget build(BuildContext context) {
-    return StreamProvider.value(
-        value: Firestore.playerStream(Authentication.user!.uid),
-        initialData: null,
-        child: Scaffold(
-            appBar: AppBar(title: const Text('Lobby')),
-            body: loading
-                ? const Center(child: CircularProgressIndicator())
-                : StreamBuilder(
-                    stream: Firestore.lobbiesStream(),
-                    builder: (context, snapshot) {
-                      final doc = context.watch<DocumentSnapshot?>();
-                      final player = Firestore.playerFromSnapshot(doc);
+    return FutureBuilder(
+        future: Firestore.player(Authentication.userId),
+        builder: (context, futureSnapshot) {
+          if (futureSnapshot.hasData) {
+            return loading
+                ? const Loading()
+                : Scaffold(
+                    appBar: AppBar(title: const Text('Lobby')),
+                    body: StreamBuilder(
+                        stream: Firestore.lobbiesStream(),
+                        builder: (context, snapshot) {
+                          final player = futureSnapshot.data;
 
-                      Future.microtask(() {
-                        if (player != null && context.mounted) {
-                          if (player.tictactoe.isNotEmpty) {
-                            context.push(
-                                '${Routes.tictactoe}/${player.tictactoe}');
-                          }
-                        }
-                      });
-
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-
-                      if (snapshot.hasError) {
-                        return Center(child: Text('Error: ${snapshot.error}'));
-                      }
-
-                      final lobbies =
-                          Firestore.lobbyListFromSnapshot(snapshot.data!);
-
-                      return ListView.builder(
-                          itemCount: lobbies.length,
-                          itemBuilder: (context, index) {
-                            final lobby = lobbies[index];
-                            return ListTile(
-                                leading: const Icon(Icons.room),
-                                title: Text(lobby.name),
-                                subtitle: Text('${lobby.players.length}/${2}'),
-                                onTap: () => showJoinDialog(lobby, player!));
+                          Future.microtask(() {
+                            if (player != null &&
+                                player.tictactoe.isNotEmpty &&
+                                context.mounted) {
+                              context.push(
+                                  '${Routes.tictactoe}/${player.tictactoe}');
+                            }
                           });
-                    }),
-            floatingActionButton: FloatingActionButton(
-                onPressed: createLobbyDialog,
-                tooltip: 'Create New Lobby',
-                child: const Icon(Icons.add))));
+
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Center(
+                                child: CircularProgressIndicator());
+                          }
+
+                          if (snapshot.hasError) {
+                            return Center(
+                                child: Text('Error: ${snapshot.error}'));
+                          }
+
+                          final lobbies =
+                              Firestore.lobbyListFromSnapshot(snapshot.data!);
+
+                          return ListView.builder(
+                              itemCount: lobbies.length,
+                              itemBuilder: (context, index) {
+                                final lobby = lobbies[index];
+                                return ListTile(
+                                    leading: const Icon(Icons.room),
+                                    title: Text(lobby.name),
+                                    subtitle:
+                                        Text('${lobby.players.length}/${2}'),
+                                    onTap: () =>
+                                        showJoinDialog(lobby, player!));
+                              });
+                        }),
+                    floatingActionButton: FloatingActionButton(
+                        onPressed: createLobbyDialog,
+                        tooltip: 'Create New Lobby',
+                        child: const Icon(Icons.add)));
+          } else {
+            return const Loading();
+          }
+        });
   }
 
   Future<void> createLobbyDialog() async {
@@ -118,6 +126,7 @@ class _TicTacToeLobbyPageState extends State<TicTacToeLobbyPage> {
                     child: const Text('Yes'),
                     onPressed: () async {
                       if (lobby.players.length > 1) {
+                        Navigator.of(context).pop();
                         snackBar(context, 'lobby already full!');
                       } else {
                         Navigator.of(context).pop();

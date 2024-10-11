@@ -3,6 +3,7 @@ import 'package:fairgames/firebase/firestore.dart';
 import 'package:fairgames/models/game_tic_tac_toe.dart';
 import 'package:fairgames/util.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../models/player.dart';
 import '../widgets/loading.dart';
@@ -58,11 +59,15 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
             initialData: null,
             builder: (context, snapshot) {
               if (snapshot.hasData) {
-                print(game?.boardItems.toString());
-                print(game?.filled.toString());
                 game = Firestore.ticTacToeGameFromSnapshot(snapshot.data!);
-
                 checkWinner();
+                Future.microtask(() {
+                  if (game!.isNotPlayer(Authentication.userId) &&
+                      context.mounted) {
+                    context.pop(context);
+                  }
+                });
+
                 return Scaffold(
                     appBar: AppBar(
                         automaticallyImplyLeading: false,
@@ -107,12 +112,8 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
             const SizedBox(height: 18),
             Text('Turn: ${game?.turnName}'),
             const SizedBox(height: 40),
-            FilledButton.tonal(
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primary),
-                onPressed: () => Firestore.clear(game!),
-                child: Text("Clear Score Board",
-                    style: Theme.of(context).textTheme.displaySmall))
+            if (player?.id != game!.creator) leaveGame,
+            if (player?.id == game!.creator) controls
           ])));
 
   Widget get board => Container(
@@ -146,9 +147,34 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
                                   ?.copyWith(
                                       fontWeight: FontWeight.bold))))))));
 
+  Widget get leaveGame => FilledButton.tonal(
+      style: ElevatedButton.styleFrom(
+          backgroundColor: Theme.of(context).colorScheme.primary),
+      onPressed: () => Firestore.clear(game!),
+      child:
+          Text("Leave game", style: Theme.of(context).textTheme.displaySmall));
+
+  Widget get controls => Column(children: [
+        FilledButton.tonal(
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primary),
+            onPressed: () => Firestore.clear(game!),
+            child: Text("Clear Score Board",
+                style: Theme.of(context).textTheme.displaySmall)),
+        const SizedBox(height: 20),
+        FilledButton.tonal(
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primary),
+            onPressed: () async {
+              context.pop(context);
+              await Firestore.endGame(game!);
+            },
+            child: Text("End game",
+                style: Theme.of(context).textTheme.displaySmall))
+      ]);
+
   void tapped(int index) async {
     if (isUserTurn && game!.boardItems[index] == '') {
-      print('tap');
       if (player?.id == game?.player1) {
         game!.boardItems[index] = 'X';
       } else {
@@ -211,25 +237,20 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
     }
   }
 
-  Future<void> showWinner(String winner) async {
-    await Firestore.clearBoard(
-        game!); //todo assign x and o to player one and two
+  void showWinner(String winner) async {
     if (winner == 'X') {
+      snackBar(context, '${game!.player1Name} is Winner!!!');
       await Firestore.updateScore1(game!);
     } else if (winner == 'O') {
+      snackBar(context, '${game!.player2Name} is Winner!!!');
       await Firestore.updateScore2(game!);
     }
 
-    if (mounted) {
-      snackBar(context, '$winner is Winner!!!');
-      Firestore.clearBoard(game!);
-    }
+    await Firestore.clearBoard(game!);
   }
 
-  void showDraw() {
-    if (mounted) {
-      snackBar(context, 'Draw');
-      Firestore.clearBoard(game!);
-    }
+  void showDraw() async {
+    snackBar(context, 'Draw');
+    await Firestore.clearBoard(game!);
   }
 }
