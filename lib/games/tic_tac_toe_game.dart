@@ -1,6 +1,7 @@
 import 'package:fairgames/firebase/authentication.dart';
 import 'package:fairgames/firebase/firestore.dart';
 import 'package:fairgames/models/game_tic_tac_toe.dart';
+import 'package:fairgames/util.dart';
 import 'package:flutter/material.dart';
 
 import '../models/player.dart';
@@ -57,9 +58,11 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
             initialData: null,
             builder: (context, snapshot) {
               if (snapshot.hasData) {
-                print('update');
                 print(game?.boardItems.toString());
+                print(game?.filled.toString());
                 game = Firestore.ticTacToeGameFromSnapshot(snapshot.data!);
+
+                checkWinner();
                 return Scaffold(
                     appBar: AppBar(
                         automaticallyImplyLeading: false,
@@ -155,7 +158,6 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
       await Firestore.updateBoard(game!);
       await Firestore.updateFilled(game!);
       await Firestore.updateTurn(game!);
-      checkWinner();
     }
   }
 
@@ -210,7 +212,8 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
   }
 
   Future<void> showWinDialog(String winner) async {
-    Firestore.clearBoard(game!);
+    await Firestore.clearBoard(
+        game!); //todo assign x and o to player one and two
     if (winner == 'X') {
       await Firestore.updateScore1(game!);
     } else if (winner == 'O') {
@@ -218,19 +221,8 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
     }
 
     if (mounted) {
-      showDialog(
-          barrierDismissible: false,
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(title: Text("$winner is Winner!!!"), actions: [
-              TextButton(
-                  child: const Text("Play Again"),
-                  onPressed: () {
-                    Firestore.clearBoard(game!);
-                    Navigator.of(context).pop();
-                  })
-            ]);
-          });
+      snackBar(context, '$winner is Winner!!!');
+      Firestore.clearBoard(game!);
     }
   }
 
