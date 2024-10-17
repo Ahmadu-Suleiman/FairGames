@@ -48,13 +48,15 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
   Widget get streamBuilder => StreamBuilder(
       stream: Firestore.tictactoeGameStream(widget.lobbyId),
       initialData: null,
-      builder: (context, snapshot) {
+      builder: (contextStream, snapshot) {
         if (snapshot.hasData) {
           game = Firestore.ticTacToeGameFromSnapshot(snapshot.data!);
           if (game != null) checkWinner();
 
-          if (game?.isNotPlayer(player!.id) ?? true && mounted) {
-            Future.microtask(() => context.pop(context));
+          if (game?.isNotPlayer(player!.id) ?? true) {
+            Future.microtask(() {
+              if (mounted) context.pop(context);
+            });
           }
 
           return Scaffold(
