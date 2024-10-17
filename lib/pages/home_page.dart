@@ -2,6 +2,7 @@ import 'package:fairgames/firebase/authentication.dart';
 import 'package:fairgames/firebase/firestore.dart';
 import 'package:fairgames/models/player.dart';
 import 'package:fairgames/routes.dart';
+import 'package:fairgames/util.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -38,6 +39,7 @@ class _HomePageState extends State<HomePage> {
                 tileColor: Theme.of(context).colorScheme.secondaryContainer,
                 leading: const Icon(Icons.grid_view),
                 title: const Text('Tic Tac Toe'),
+                subtitle: const Text('Play with a friend online'),
                 onTap: () => context.push(Routes.tictactoeLobby))
           ]);
         }));
@@ -51,7 +53,7 @@ class _HomePageState extends State<HomePage> {
           barrierDismissible: false,
           builder: (BuildContext context) {
             return AlertDialog(
-                title: const Text('Create Player'),
+                title: const Text('Create Player account'),
                 content: TextField(
                     controller: controller,
                     decoration: const InputDecoration(
@@ -66,6 +68,8 @@ class _HomePageState extends State<HomePage> {
                               id: Authentication.user!.uid,
                               username: controller.text,
                               tictactoe: ''));
+                        } else {
+                          snackBar(context, 'Name cannot be empty');
                         }
                       },
                       child: const Text('Create'))

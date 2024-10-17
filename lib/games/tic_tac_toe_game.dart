@@ -53,13 +53,8 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
           game = Firestore.ticTacToeGameFromSnapshot(snapshot.data!);
           if (game != null) checkWinner();
 
-          if (game?.isNotPlayer(player!.id) ?? true) {
-            Future.microtask(() {
-              if (context.mounted) {
-                context.pop(context);
-              }
-            });
-            return const Loading();
+          if (game?.isNotPlayer(player!.id) ?? true && mounted) {
+            Future.microtask(() => context.pop(context));
           }
 
           return Scaffold(
@@ -74,18 +69,22 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
       });
 
   Widget get top => game!.player2.isEmpty
-      ? Text(game!.player1Name,
-          style: Theme.of(context)
-              .textTheme
-              .headlineLarge
-              ?.copyWith(fontWeight: FontWeight.bold))
+      ? Column(children: [
+          Text(game!.player1Name,
+              style: Theme.of(context)
+                  .textTheme
+                  .headlineLarge
+                  ?.copyWith(fontWeight: FontWeight.bold)),
+          Text('Waiting for the second player  to join',
+              style: Theme.of(context).textTheme.titleLarge)
+        ])
       : Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
               Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
-                    Text(game!.player1Name,
+                    Text('${game!.player1Name} (X)',
                         style: Theme.of(context)
                             .textTheme
                             .headlineLarge
@@ -96,7 +95,7 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
               Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
-                    Text(game!.player2Name,
+                    Text('${game!.player2Name} (0)',
                         style: Theme.of(context)
                             .textTheme
                             .headlineLarge
@@ -245,6 +244,8 @@ class _TicTacToeGameState extends State<TicTacToeGame> {
   }
 
   void showWinner(String winner) async {
+    vibrate();
+    showConfetti(context);
     await Firestore.clearBoard(game!);
 
     if (mounted) {

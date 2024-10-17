@@ -29,11 +29,12 @@ class _TicTacToeLobbyPageState extends State<TicTacToeLobbyPage> {
         builder: (context, futureSnapshot) {
           if (futureSnapshot.hasData) {
             player = futureSnapshot.data!;
-            Future.microtask(() {
-              if (player.tictactoe.isNotEmpty && context.mounted) {
-                context.push('${Routes.tictactoe}/${player.tictactoe}');
-              }
-            });
+
+            if (player.tictactoe.isNotEmpty && context.mounted) {
+              WidgetsBinding.instance.addPostFrameCallback((_) =>
+                  context.push('${Routes.tictactoe}/${player.tictactoe}'));
+            }
+
             return loading
                 ? const Loading()
                 : Scaffold(
@@ -50,7 +51,7 @@ class _TicTacToeLobbyPageState extends State<TicTacToeLobbyPage> {
                                     child: TextButton(
                                         onPressed: createLobbyDialog,
                                         child: const Text('Add a new lobby')))
-                                : ListView.builder(
+                                : ListView.separated(
                                     itemCount: lobbies.length,
                                     itemBuilder: (context, index) {
                                       final lobby = lobbies[index];
@@ -61,7 +62,9 @@ class _TicTacToeLobbyPageState extends State<TicTacToeLobbyPage> {
                                               '${lobby.players.length}/${2}'),
                                           onTap: () =>
                                               showJoinDialog(lobby, player));
-                                    });
+                                    },
+                                    separatorBuilder: (_, index) =>
+                                        const Divider());
                           } else {
                             logger.e(snapshot.stackTrace);
                             return const Center(
@@ -136,11 +139,10 @@ class _TicTacToeLobbyPageState extends State<TicTacToeLobbyPage> {
   }
 
   void joinLobby(Lobby lobby) async {
+    Navigator.of(context).pop();
     if (lobby.players.length > 1) {
-      Navigator.of(context).pop();
-      snackBar(context, 'lobby already full!');
+      snackBar(context, 'Lobby already full!');
     } else {
-      Navigator.of(context).pop();
       setState(() => loading = true);
       await Firestore.joinLobby(lobbyId: lobby.id, playerId: player.id);
       await Firestore.addPlayerGameTicTacToe(
